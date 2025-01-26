@@ -1,0 +1,580 @@
+From 2394f1571d878dab8f84bcbdc4d4de8d386bfec1 Mon Sep 17 00:00:00 2001
+From: zihan19-song <zihan19.song@samsung.com>
+Date: Sat, 25 Jan 2025 04:47:59 +0800
+Subject: [PATCH] modify makefile
+
+---
+ components.mk                                 |  18 ++
+ .../platform/soc/bl602/bl602/bfl_main.c       |   2 +-
+ .../bl602_demo_event/bl602_demo_event/main.c  | 222 +++++++++++++++++-
+ .../get-start/helloworld/helloworld/main.c    |   1 +
+ .../demo_uart/demo_uart/demo_uart_echo.c      |   3 +
+ .../peripheral/demo_uart/demo_uart/main.c     |   8 +-
+ make_scripts_riscv/component_wrapper.mk       |  35 ++-
+ make_scripts_riscv/project.mk                 |  31 ++-
+ make_scripts_thead_riscv/project.mk           |   1 +
+ 9 files changed, 311 insertions(+), 10 deletions(-)
+ create mode 100644 components.mk
+
+diff --git a/components.mk b/components.mk
+new file mode 100644
+index 000000000..9e63118ab
+--- /dev/null
++++ b/components.mk
+@@ -0,0 +1,18 @@
++STDK_APP_COMPONENT = $(PROJECT_NAME)
++STDK_APP_COMPONENT_PATH = $(PROJECT_PATH)
++
++EXTRA_COMPONENT_DIRS ?=
++BL_SDK_COMPONENT_DIRS := $(EXTRA_COMPONENT_DIRS) $(BL60X_SDK_PATH)/components $(BL60X_SDK_PATH)/customer_components $(PROJECT_COMPONENT)
++# $(info ~~~~~~~dir $(BL_SDK_COMPONENT_DIRS))
++
++rwildcard = $(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
++BL_SDK_COMPONENTS_RAL_PATH :=  $(dir $(foreach cd,$(BL_SDK_COMPONENT_DIRS),                       \
++						$(call rwildcard,$(cd)/,bouffalo.mk) 						\
++				))
++BL_SDK_COMPONENTS += $(sort $(foreach comp,$(BL_SDK_COMPONENTS_RAL_PATH),$(lastword $(subst /, ,$(comp)))))
++BL_SDK_COMPONENTS_REAL_PATH += $(patsubst %/,%,$(BL_SDK_COMPONENTS_RAL_PATH))
++
++COMPONENTS += $(IOT_CORE_COMPONENTS) $(BL_SDK_COMPONENTS)
++COMPONENTS_REAL_PATH += $(IOT_CORE_COMPONENTS_REAL_PATH) $(BL_SDK_COMPONENTS_REAL_PATH)
++# $(info ~~~~~~~ $(COMPONENTS))
++# $(info !~~~~~~~ $(COMPONENTS_REAL_PATH))
+\ No newline at end of file
+diff --git a/components/platform/soc/bl602/bl602/bfl_main.c b/components/platform/soc/bl602/bl602/bfl_main.c
+index 40d3f9a62..d87941f89 100755
+--- a/components/platform/soc/bl602/bl602/bfl_main.c
++++ b/components/platform/soc/bl602/bl602/bfl_main.c
+@@ -190,7 +190,7 @@ static int get_dts_addr(const char *name, uint32_t *start, uint32_t *off)
+ 
+ static void app_main_entry(void *pvParameters)
+ {
+-    extern int main();
++    extern void main();
+     main();
+     vTaskDelete(NULL);
+ }
+diff --git a/customer_app/bl602_demo_event/bl602_demo_event/main.c b/customer_app/bl602_demo_event/bl602_demo_event/main.c
+index 92126c701..04d3e388d 100755
+--- a/customer_app/bl602_demo_event/bl602_demo_event/main.c
++++ b/customer_app/bl602_demo_event/bl602_demo_event/main.c
+@@ -81,6 +81,8 @@
+ #include <fdt.h>
+ #include <device/vfs_uart.h>
+ #include <wifi_bt_coex.h>
++#include <sys/time.h>
++#include <hosal_rtc.h>
+ 
+ //#include <easyflash.h>
+ #include <bl60x_fw_api.h>
+@@ -117,6 +119,7 @@
+ #define CLI_CMD_AUTOSTART2              "cmd_auto2"
+ 
+ #define TIME_5MS_IN_32768CYCLE  (164) // (5000/(1000000/32768))
++BLOG_DECLARE(myblog);
+ 
+ bool pds_start = false;
+ extern void ble_stack_start(void);
+@@ -509,7 +512,9 @@ static void event_cb_wifi_event(input_event_t *event, void *private_data)
+                 aos_now_ms(),
+                 WIFI_SCAN_DONE_EVENT_OK == event->value ? "OK" : "Busy now"
+             );
++            printf("^^^^^^^^^%s, event_scan_done", __func__);
+             wifi_mgmr_cli_scanlist();
++            printf("^^^^^^^^^%s, event_scan_done: %d", __func__, wifi_mgmr_sta_scanlist_nums_get());
+         }
+         break;
+         case CODE_WIFI_ON_DISCONNECT:
+@@ -546,6 +551,25 @@ static void event_cb_wifi_event(input_event_t *event, void *private_data)
+             printf("[SYS] Memory left is %d Bytes\r\n", xPortGetFreeHeapSize());
+         }
+         break;
++        case CODE_WIFI_ON_AP_STA_ADD:
++        {
++            printf("[APP] [EVT] [AP] [ADD] %lld, sta idx is %lu\r\n", aos_now_ms(), (uint32_t)event->value);
++            struct wifi_sta_basic_info sta_info;
++            wifi_mgmr_ap_sta_info_get(&sta_info, (uint8_t)event->value);
++            printf("station: %02x:%02x:%02x:%02x:%02x:%02x join\r\n", 
++            sta_info.sta_mac[0],sta_info.sta_mac[1],sta_info.sta_mac[2],sta_info.sta_mac[3],sta_info.sta_mac[4],sta_info.sta_mac[5]);
++            
++        }
++        case CODE_WIFI_ON_AP_STA_DEL:
++        {
++            printf("[APP] [EVT] [AP] [ADD] %lld, sta idx is %lu\r\n", aos_now_ms(), (uint32_t)event->value);
++            struct wifi_sta_basic_info sta_info;
++            wifi_mgmr_ap_sta_info_get(&sta_info, (uint8_t)event->value);
++            printf("station: %02x:%02x:%02x:%02x:%02x:%02x leave\r\n", 
++            sta_info.sta_mac[0],sta_info.sta_mac[1],sta_info.sta_mac[2],sta_info.sta_mac[3],sta_info.sta_mac[4],sta_info.sta_mac[5]);
++            
++        }
++        break;
+         case CODE_WIFI_ON_PROV_SSID:
+         {
+             printf("[APP] [EVT] [PROV] [SSID] %lld: %s\r\n",
+@@ -610,6 +634,7 @@ static void event_cb_wifi_event(input_event_t *event, void *private_data)
+ 		case CODE_WIFI_ON_PROV_SCAN_START:
+ 		{
+ 			printf("[APP] [EVT] [PROV] [SCAN] %lld\r\n", aos_now_ms());
++            printf("^^^^^^^^^%s, event_scan_start", __func__);
+ 			wifiprov_scan((void *)event->value);
+ 		}
+ 		break;
+@@ -1273,10 +1298,199 @@ static void adc_tsen_init()
+ #endif
+ 
+ void rijndael_aes_test(void);
++/*
++#define LOG_COLOR_HEAD      "\033[0;%dm"
++#define LOG_COLOR_END       "\033[0m"
++
++#define PRINT_MY_LOG(M,...)     if (1) {custom_cflog(BLOG_LEVEL_INFO,"MYTAG", M, ##__VA_ARGS__);}
++
++#define PRINT_ST_LOGI(TAG, M, ...)     do {__blog_printf("I (%u) %s : %s\r\n",\
++            (xPortIsInsideInterrupt())?(xTaskGetTickCountFromISR()):(xTaskGetTickCount()), \
++            TAG, M, ##__VA_ARGS__);\
++        } while(0==1)
++
++#define IOT_INFO(fmt, args...) iot_bsp_debug("[IoT]", "%s(%d) > "fmt, __FUNCTION__, __LINE__, ##args)
++
++void iot_bsp_debug(const char* tag, const char* fmt, ...)
++{
++    char* buf1;
++    char* buf2;
++	int ret;
++	va_list va;
++
++	va_start(va, tag);
++	ret = vasprintf(&buf1, tag, va);
++	va_end(va);
++    
++    va_start(va, fmt);
++	ret = vasprintf(&buf2, fmt, va);
++	va_end(va);
++    
++    PRINT_ST_LOGI(tag, buf2);
++}
++*/
++#define INFO_LOG_COLOR_HEAD      "\033[32m"
++#define INFO_LOG_COLOR_END       "\033[0m"
++#define WARN_LOG_COLOR_HEAD      "\033[33m"
++#define WARN_LOG_COLOR_END       "\033[0m"
++#define ERROR_LOG_COLOR_HEAD      "\033[31m"
++#define ERROR_LOG_COLOR_END       "\033[0m"
++#define DEBUG_LOG_COLOR_HEAD      "\033[0m"
++#define DEBUG_LOG_COLOR_END       "\033[0m"
++
++
++#define PRINT_ST_INFO_LOG(TAG, M, ...)     do {__blog_printf(INFO_LOG_COLOR_HEAD "W (%u) %s : %s" INFO_LOG_COLOR_END "\r\n",\
++            (xPortIsInsideInterrupt())?(xTaskGetTickCountFromISR()):(xTaskGetTickCount()), \
++            TAG, M, ##__VA_ARGS__);\
++        } while(0==1)
++
++#define PRINT_ST_WARN_LOG(TAG, M, ...)     do {__blog_printf(WARN_LOG_COLOR_HEAD "I (%u) %s : %s" WARN_LOG_COLOR_END "\r\n",\
++            (xPortIsInsideInterrupt())?(xTaskGetTickCountFromISR()):(xTaskGetTickCount()), \
++            TAG, M, ##__VA_ARGS__);\
++        } while(0==1)
++
++#define PRINT_ST_ERROR_LOG(TAG, M, ...)     do {__blog_printf(ERROR_LOG_COLOR_HEAD "E (%u) %s : %s" ERROR_LOG_COLOR_END "\r\n",\
++            (xPortIsInsideInterrupt())?(xTaskGetTickCountFromISR()):(xTaskGetTickCount()), \
++            TAG, M, ##__VA_ARGS__);\
++        } while(0==1)
++
++#define PRINT_ST_DEBUG_LOG(TAG, M, ...)     do {__blog_printf(DEBUG_LOG_COLOR_HEAD "D (%u) %s : %s" DEBUG_LOG_COLOR_END "\r\n",\
++            (xPortIsInsideInterrupt())?(xTaskGetTickCountFromISR()):(xTaskGetTickCount()), \
++            TAG, M, ##__VA_ARGS__);\
++        } while(0==1)
++
++void iot_bsp_debug(int level, const char* tag, const char* fmt, ...)
++{
++    char* buf;
++	int ret;
++	va_list va;
++
++	va_start(va, fmt);
++	ret = vasiprintf(&buf, fmt, va);
++	va_end(va);
++
++	if (level == 1) {
++		PRINT_ST_ERROR_LOG(tag, buf);
++	} else if (level == 2) {
++		PRINT_ST_WARN_LOG(tag, buf);
++	} else if (level == 3) {
++		PRINT_ST_INFO_LOG(tag, buf);
++	} else if (level == 4) {
++		PRINT_ST_DEBUG_LOG(tag, buf);
++	} else {
++		PRINT_ST_DEBUG_LOG(tag, buf);
++	}
++
++	if (ret >= 0) {
++		free(buf);
++	}
++}
++
++static unsigned int _iot_bsp_debug_get_free_heap_size(void)
++{
++	return xPortGetFreeHeapSize();
++}
++
++static unsigned int _iot_bsp_debug_get_minimum_free_heap_size(void)
++{
++	return xPortGetMinimumEverFreeHeapSize();
++}
++
++static unsigned int _iot_bsp_debug_get_maximum_heap_size(void)
++{
++	return configTOTAL_HEAP_SIZE;
++}
++
++void iot_bsp_debug_check_heap(const char* tag, const char* func, const int line, const char* fmt, ...)
++{
++	static int count = 0;
++	char* buf;
++	int ret;
++	va_list va;
++
++	va_start(va, fmt);
++	ret = vasprintf(&buf, fmt, va);
++	va_end(va);
++
++	if (count == 0) {
++        iot_bsp_debug(2, tag, "%s(%d) > [MEMCHK][%d] Heap total size : %d", func, line, count, _iot_bsp_debug_get_maximum_heap_size());
++		//PRINT_ST_WARN_LOG(tag, "%s(%d) > [MEMCHK][%d] Heap total size : %d", func, line, count, _iot_bsp_debug_get_maximum_heap_size());
++	}
++
++	iot_bsp_debug(2, tag, "%s(%d) > [MEMCHK][%d][%s] CU:%d, CR:%d, PU:%d, PR:%d", func, line, ++count, buf,
++			_iot_bsp_debug_get_maximum_heap_size() - _iot_bsp_debug_get_free_heap_size(),
++			_iot_bsp_debug_get_free_heap_size(),
++			_iot_bsp_debug_get_maximum_heap_size() - _iot_bsp_debug_get_minimum_free_heap_size(),
++			_iot_bsp_debug_get_minimum_free_heap_size());
++
++	if (ret >= 0) {
++		free(buf);
++	}
++}
++
++#define IOT_DEBUG_PREFIX "[IoT]"
++
++#define IOT_INFO(fmt, args...) iot_bsp_debug(3, IOT_DEBUG_PREFIX, "%s(%d) > "fmt, __FUNCTION__, __LINE__, ##args)
++
++#define IOT_WARN(fmt, args...) iot_bsp_debug(2, IOT_DEBUG_PREFIX, "%s(%d) > "fmt, __FUNCTION__, __LINE__, ##args)
++
++#define IOT_ERROR(fmt, args...) iot_bsp_debug(1, IOT_DEBUG_PREFIX, "%s(%d) > "fmt, __FUNCTION__, __LINE__, ##args)
++
++#define IOT_DEBUG(fmt, args...) iot_bsp_debug(4, IOT_DEBUG_PREFIX, "%s(%d) > "fmt, __FUNCTION__, __LINE__, ##args)
++
++#define IOT_MEM_CHECK(fmt, args...) iot_bsp_debug_check_heap(IOT_DEBUG_PREFIX, __FUNCTION__, __LINE__, fmt, ##args)
++
++void print_log_test()
++{
++    blog_debug("*****blog_testc2 debug\r\n");
++    blog_info("*******blog_testc2 info\r\n");
++    blog_warn("******blog_testc2 warn\r\n");
++    blog_error("******blog_testc2 error\r\n");
++    blog_assert("*****blog_testc2 assert\r\n");
++    //PRINT_MY_LOG("this is my first log\r\n", "this is my second log",43);
++    char str[10] = "hello";
++    IOT_INFO("This is INFO log: %s, %d", str, 20);
++    IOT_WARN("This is warning log");
++    IOT_ERROR("This is error log");
++    IOT_DEBUG("This is debug log");
++    IOT_MEM_CHECK("check mem:");
++}
++
++void iot_bsp_system_get_time_in_sec(char* buf, unsigned int buf_len)
++{
++	int ret = -1;
++    hosal_rtc_time_t time_buf;
++    hosal_rtc_dev_t rtc;
++    rtc.port = 0;
++    rtc.config.format = HOSAL_RTC_FORMAT_BCD; 
++    hosal_rtc_init(&rtc);
++    memset(&time_buf, 0, sizeof(hosal_rtc_time_t));
++    vTaskDelay(10000);
++
++    ret = hosal_rtc_get_time(&rtc, &time_buf);
++
++	IOT_INFO("get time sec = %x", time_buf.sec);
++    IOT_INFO("get time min = %x", time_buf.min);
++    IOT_INFO("get time hr  = %x", time_buf.hr);
++    IOT_INFO("get time data = %x", time_buf.date);
++    IOT_INFO("get time month = %x", time_buf.month);
++    IOT_INFO("get time year = %x", time_buf.year + 0x2000);
++    hosal_rtc_finalize(&rtc);
++}
++
++void printTime(char* buf, unsigned int buf_len)
++{
++    struct timeval tv = {0,};
++
++	gettimeofday(&tv, NULL);
++	snprintf(buf, buf_len, "%ld", tv.tv_sec);
++    IOT_WARN("current time: %s", buf);
++}
+ 
+ void main()
+ {
+     bl_sys_init();
++    
+ 
+     system_thread_init();
+     
+@@ -1285,7 +1499,13 @@ void main()
+ #endif
+ 
+     puts("[OS] Starting proc_hellow_entry task...\r\n");
+-    xTaskCreate(proc_hellow_entry, (char*)"hellow", 512, NULL, 15, NULL);
++    print_log_test();
++    char *curTime = "";
++    unsigned int len = 12;
++    //iot_bsp_system_get_time_in_sec(curTime,len);
++    //printTime(curTime, len);
++    //xTaskCreate(proc_hellow_entry, (char*)"hellow", 512, NULL, 15, NULL);
++    //hal_reboot();
+     puts("[OS] Starting aos_loop_proc task...\r\n");
+     xTaskCreate(proc_main_entry, (char*)"main_entry", 1024, NULL, 15, NULL);
+     puts("[OS] Starting TCP/IP Stack...\r\n");
+diff --git a/customer_app/get-start/helloworld/helloworld/main.c b/customer_app/get-start/helloworld/helloworld/main.c
+index 822ea4e45..74c63f3af 100755
+--- a/customer_app/get-start/helloworld/helloworld/main.c
++++ b/customer_app/get-start/helloworld/helloworld/main.c
+@@ -3,6 +3,7 @@
+ #include <FreeRTOS.h>
+ #include <task.h>
+ #include <bl_uart.h>
++#include <utils_string.h>
+ 
+ #define CI_CASE_TABLE_STEP1 {"[helloworld]", "start"}
+ #define CI_CASE_TABLE_STEP2 {"[helloworld]", "helloworld"}
+diff --git a/customer_app/peripheral/demo_uart/demo_uart/demo_uart_echo.c b/customer_app/peripheral/demo_uart/demo_uart/demo_uart_echo.c
+index 71c31ab1d..ecea24c7c 100755
+--- a/customer_app/peripheral/demo_uart/demo_uart/demo_uart_echo.c
++++ b/customer_app/peripheral/demo_uart/demo_uart/demo_uart_echo.c
+@@ -36,10 +36,13 @@ void demo_hosal_uart_echo(int uart_id)
+ 
+     while (1) {
+         /* Uart receive poll */
++        //printf("\r\n");
+         ret = hosal_uart_receive(&uart_dev_echo, data, sizeof(data));
+         if (ret > 0) {
+             /* Uart send poll */
++            printf("expected size: %d, number of bytes: %d\r\n", sizeof(data), ret);
+             hosal_uart_send(&uart_dev_echo, data, ret);
++            //printf("\r\n");
+         }
+     }
+ }
+diff --git a/customer_app/peripheral/demo_uart/demo_uart/main.c b/customer_app/peripheral/demo_uart/demo_uart/main.c
+index b04dbc9ba..4be9a08e3 100755
+--- a/customer_app/peripheral/demo_uart/demo_uart/main.c
++++ b/customer_app/peripheral/demo_uart/demo_uart/main.c
+@@ -49,11 +49,17 @@ static void cmd_hosal_uart_abr(char *buf, int len, int argc, char **argv)
+     demo_hosal_uart_abr(1);
+ }
+ 
++static void cmd_hosal_uart_clean(char *buf, int len, int argc, char **argv)
++{
++    printf("This is a test for cleanup, just print log\r\n");
++}
++
+ const static struct cli_command cmds_user[] STATIC_CLI_CMD_ATTRIBUTE = {
+     { "demo_hosal_uart_echo", "demo UART echo test", cmd_hosal_uart_echo},
+     { "demo_hosal_uart_int", "demo UART int test", cmd_hosal_uart_int},
+     { "demo_hosal_uart_dma", "demo UART DMA test", cmd_hosal_uart_dma},
+     { "demo_hosal_uart_abr", "demo UART abr test", cmd_hosal_uart_abr},
++    { "clean", "demo UART clean", cmd_hosal_uart_clean},
+ };
+ 
+ /**
+@@ -61,6 +67,6 @@ const static struct cli_command cmds_user[] STATIC_CLI_CMD_ATTRIBUTE = {
+  */
+ int main(void)
+ {
+-    blog_info("demo hosal uart !\r\n");
++    blog_info("@@@@@@@@@@@@@@@@@@@@demo hosal uart !\r\n")
+     return 0;
+ }
+diff --git a/make_scripts_riscv/component_wrapper.mk b/make_scripts_riscv/component_wrapper.mk
+index 961257c61..d4f5de83d 100644
+--- a/make_scripts_riscv/component_wrapper.mk
++++ b/make_scripts_riscv/component_wrapper.mk
+@@ -40,7 +40,15 @@ COMPONENT_LIBRARY = lib$(COMPONENT_NAME).a
+ COMPONENT_SRCDIRS = .
+ 
+ # By default, include only the include/ dir.
++# $(info wrapper $(COMPONENT_ADD_INCLUDEDIRS))
++# ifeq ($(COMPONENT_NAME), switch_example)
++# $(info ~~~~~~~com name $(COMPONENT_PATH))
++# $(info ~~~~~~~prj name $(PROJECT_PATH))
++# include $(IOT_CORE_PATH)/src/bouffalo.mk
++# else
+ COMPONENT_ADD_INCLUDEDIRS = . include
++# endif
++# $(info wrapper $(COMPONENT_ADD_INCLUDEDIRS))
+ COMPONENT_ADD_LDFLAGS =
+ 
+ # Define optional compiling macros
+@@ -176,7 +184,10 @@ COMPONENT_OBJS := $(call uniq,$(COMPONENT_OBJS))
+ COMPONENT_PRIV_INCLUDEDIRS ?=
+ OWN_INCLUDES:=$(abspath $(addprefix $(COMPONENT_PATH)/,$(COMPONENT_PRIV_INCLUDEDIRS) $(COMPONENT_ADD_INCLUDEDIRS)))
+ COMPONENT_INCLUDES := $(OWN_INCLUDES) $(filter-out $(OWN_INCLUDES),$(COMPONENT_INCLUDES))
+-
++ifeq ($(COMPONENT_NAME), src)
++# $(info !18666 $(OWN_INCLUDES))
++# $(info !187187187187187 $(COMPONENT_INCLUDES))
++endif
+ 
+ ################################################################################
+ # 4) Define a target to generate component_project_vars.mk Makefile which
+@@ -212,16 +223,34 @@ endef
+ # Note: The :: target here is not a mistake. This target should always be
+ # executed, as dependencies are checked by the parent project-level make target.
+ # See https://www.gnu.org/software/make/manual/make.html#index-_003a_003a-rules-_0028double_002dcolon_0029
++
++ifeq ($(COMPONENT_NAME), switch_example)
++define applib_MakeVariablePath
++$(subst $(BL60X_SDK_PATH),$$(BL60X_SDK_PATH),$(subst $(IOT_CORE_PATH),$$(IOT_CORE_PATH),$(subst $(BUILD_DIR_BASE),$$(BUILD_DIR_BASE),$(1))))
++endef
+ component_project_vars.mk::
+ 	$(details) "Building component project variables list $(abspath $@)"
+ 	@echo '# Automatically generated build file. Do not edit.' > $@
+-	@echo 'COMPONENT_INCLUDES += $(call MakeVariablePath,$(abspath $(addprefix $(COMPONENT_PATH)/,$(COMPONENT_ADD_INCLUDEDIRS))))' >> $@
++	@echo 'COMPONENT_INCLUDES += $(call applib_MakeVariablePath,$(abspath $(addprefix $(IOT_CORE_PATH)/src/,$(COMPONENT_ADD_INCLUDEDIRS))))' >> $@
+ 	@echo 'COMPONENT_LDFLAGS += $(COMPONENT_ADD_LDFLAGS_HEAD) $(call MakeVariablePath,-L$(COMPONENT_BUILD_DIR) $(COMPONENT_ADD_LDFLAGS)) $(COMPONENT_ADD_LDFLAGS_TAIL)' >> $@
+ 	@echo 'COMPONENT_LINKER_DEPS += $(call MakeVariablePath,$(call resolvepath,$(COMPONENT_ADD_LINKER_DEPS),$(COMPONENT_PATH)))' >> $@
+ 	@echo 'COMPONENT_SUBMODULES += $(call MakeVariablePath,$(abspath $(addprefix $(COMPONENT_PATH)/,$(COMPONENT_SUBMODULES))))' >> $@
+ 	@echo 'COMPONENT_LIBRARIES += $(COMPONENT_NAME)' >> $@
+ 	@echo 'component-$(COMPONENT_NAME)-build: $(addprefix component-,$(addsuffix -build,$(COMPONENT_DEPENDS)))' >> $@
++else
++# $(info !*!*!**!*! $(COMPONENT_NAME))
+ 
++# endif
++component_project_vars.mk::
++	$(details) "Building component project variables list $(abspath $@)"
++	@echo '# Automatically generated build file. Do not edit.' > $@
++	@echo 'COMPONENT_INCLUDES += $(call MakeVariablePath,$(abspath $(addprefix $(COMPONENT_PATH)/,$(COMPONENT_ADD_INCLUDEDIRS))))' >> $@
++	@echo 'COMPONENT_LDFLAGS += $(COMPONENT_ADD_LDFLAGS_HEAD) $(call MakeVariablePath,-L$(COMPONENT_BUILD_DIR) $(COMPONENT_ADD_LDFLAGS)) $(COMPONENT_ADD_LDFLAGS_TAIL)' >> $@
++	@echo 'COMPONENT_LINKER_DEPS += $(call MakeVariablePath,$(call resolvepath,$(COMPONENT_ADD_LINKER_DEPS),$(COMPONENT_PATH)))' >> $@
++	@echo 'COMPONENT_SUBMODULES += $(call MakeVariablePath,$(abspath $(addprefix $(COMPONENT_PATH)/,$(COMPONENT_SUBMODULES))))' >> $@
++	@echo 'COMPONENT_LIBRARIES += $(COMPONENT_NAME)' >> $@
++	@echo 'component-$(COMPONENT_NAME)-build: $(addprefix component-,$(addsuffix -build,$(COMPONENT_DEPENDS)))' >> $@
++endif
+ ################################################################################
+ # 5) Where COMPONENT_OWNBUILDTARGET / COMPONENT_OWNCLEANTARGET
+ # is not set by bouffalo.mk, define default build, clean, etc. targets
+@@ -255,6 +284,7 @@ DEBUG_FLAGS ?= -gdwarf
+ 
+ # Include all dependency files already generated
+ -include $(COMPONENT_OBJS:.o=.d)
++#.d是依赖关系文件，cat XXX.d查看 XXX.o文件的依赖关系
+ 
+ # This is a fix for situation where the project or IDF dir moves, and instead
+ # of rebuilding the target the build fails until make clean is run
+@@ -308,6 +338,7 @@ $(2):
+ 	mkdir -p $(2)
+ endef
+ 
++$(info !@@@@@@@@ $(COMPONENT_SRCDIRS))
+ # Generate all the compile target patterns
+ $(foreach srcdir,$(COMPONENT_SRCDIRS), $(eval $(call GenerateCompileTargets,$(srcdir),$(call stripLeadingParentDirs,$(srcdir)))))
+ 
+diff --git a/make_scripts_riscv/project.mk b/make_scripts_riscv/project.mk
+index 0d54cded0..0a50391f4 100644
+--- a/make_scripts_riscv/project.mk
++++ b/make_scripts_riscv/project.mk
+@@ -76,7 +76,10 @@ endif
+ 
+ # disable built-in make rules, makes debugging saner
+ MAKEFLAGS_OLD := $(MAKEFLAGS)
++
+ MAKEFLAGS +=-rR
++# CFLAGS +=-D__STDC_HOSTED__=1
++# $(info ^@^@^@^@^@^@ $(CFLAGS))
+ 
+ # Default path to the project: we assume the Makefile including this file
+ # is in the project directory
+@@ -103,6 +106,8 @@ ifndef COMPONENT_DIRS
+ EXTRA_COMPONENT_DIRS ?=
+ COMPONENT_DIRS := $(PROJECT_PATH)/components $(EXTRA_COMPONENT_DIRS) $(BL60X_SDK_PATH)/components $(BL60X_SDK_PATH)/customer_components $(PROJECT_PATH)/$(PROJECT_NAME) $(PROJECT_COMPONENT)
+ endif
++# $(info %%%%%%%%%$$$$$$$ [$(COMPONENT_DIRS)])
++# $(info !!!!!!!!!$$$$$$$ [$(PROJECT_COMPONENT)])
+ export COMPONENT_DIRS
+ 
+ # The project Makefile can define a list of components, but if it does not do this we just take all available components
+@@ -141,7 +146,7 @@ COMPONENTS := $(filter $(INCLUDE_COMPONENTS), $(COMPONENTS))
+ COMPONENTS_REAL_PATH := $(filter $(INCLUDE_COMPONENTS_REAL_PATH), $(COMPONENTS_REAL_PATH))
+ endif
+ export COMPONENTS
+-
++# $(info !&!&!&!&!&! $(COMPONENTS_REAL_PATH))
+ # Resolve all of COMPONENTS into absolute paths in COMPONENT_PATHS.
+ #
+ # If a component name exists in multiple COMPONENT_DIRS, we take the first match.
+@@ -153,6 +158,8 @@ export COMPONENTS
+ #COMPONENT_PATHS := $(patsubst %/,%,$(COMPONENTS_RAL_PATH))
+ COMPONENT_PATHS := $(COMPONENTS_REAL_PATH)
+ export COMPONENT_PATHS
++# $(info !&&&&&&&&&&&& [$(COMPONENTS)])
++$(info !&&&&&&&&&&&&path [$(COMPONENT_PATHS)])
+ 
+ 
+ # Initialise project-wide variables which can be added to by
+@@ -276,6 +283,7 @@ COMMON_WARNING_FLAGS = -Wall -Werror=all \
+ 	-Wno-error=unused-but-set-variable \
+ 	-Wno-error=unused-variable \
+ 	-Wno-error=deprecated-declarations \
++	-Wno-error=format \
+ 	-Wextra \
+ 	-Wno-unused-parameter -Wno-sign-compare
+ 
+@@ -526,8 +534,8 @@ define ComponentMake
+ endef
+ 
+ # Generate top-level component-specific targets for each component
+-# $(1) - path to component dir
+-# $(2) - name of component
++# $(1) - path to component dir组件的路径
++# $(2) - name of component组件名
+ #
+ define GenerateComponentTargets
+ .PHONY: component-$(2)-build component-$(2)-clean
+@@ -564,8 +572,21 @@ $(1):$(BUILD_DIR_BASE)/$(1)/lib$(1).a
+ 	$(details) "Target '$$^' responsible for '$$@'"
+ endef
+ 
+-$(foreach component,$(COMPONENT_PATHS),$(eval $(call GenerateComponentTargets,$(component),$(notdir $(component)))))
+-$(foreach component,$(COMPONENT_PATHS),$(eval $(call GenerateComponentNameTargets,$(notdir $(component)))))
++$(info !proj_mk_574 $(IOT_CORE_COMPONENTS_REAL_PATH))
++$(info !proj_mk_575 $(STDK_APP_COMPONENT_PATH))
++ $(info !proj_mk_576 $(BL_SDK_COMPONENTS_REAL_PATH))
++$(foreach component,$(BL_SDK_COMPONENTS_REAL_PATH),$(eval $(call GenerateComponentTargets,$(component),$(notdir $(component)))))
++# $(info !proj_mk_578 $(COMPONENT_INCLUDES))
++
++# $(info !proj_mk_579 $(COMPONENT_INCLUDES))
++
++$(foreach component,$(BL_SDK_COMPONENTS_REAL_PATH),$(eval $(call GenerateComponentNameTargets,$(notdir $(component)))))
++$(eval $(call GenerateComponentTargets,$(IOT_CORE_COMPONENTS_REAL_PATH),$(notdir $(IOT_CORE_COMPONENTS_REAL_PATH))))
++$(eval $(call GenerateComponentNameTargets,$(notdir $(IOT_CORE_COMPONENTS_REAL_PATH))))
++$(eval $(call GenerateComponentTargets,$(STDK_APP_COMPONENT_PATH),$(notdir $(STDK_APP_COMPONENT_PATH))))
++$(eval $(call GenerateComponentNameTargets,$(notdir $(STDK_APP_COMPONENT_PATH))))
++$(info !proj_mk_586 $(CPPFLAGS))
++
+ 
+ app-clean: $(addprefix component-,$(addsuffix -clean,$(notdir $(COMPONENT_PATHS))))
+ 	$(summary) RM $(APP_ELF)
+diff --git a/make_scripts_thead_riscv/project.mk b/make_scripts_thead_riscv/project.mk
+index 197552b6f..8e5b4b8a8 100644
+--- a/make_scripts_thead_riscv/project.mk
++++ b/make_scripts_thead_riscv/project.mk
+@@ -103,6 +103,7 @@ ifndef COMPONENT_DIRS
+ EXTRA_COMPONENT_DIRS ?=
+ COMPONENT_DIRS := $(PROJECT_PATH)/components $(EXTRA_COMPONENT_DIRS) $(BL60X_SDK_PATH)/components $(BL60X_SDK_PATH)/customer_components $(PROJECT_PATH)/$(PROJECT_NAME) $(PROJECT_COMPONENT)
+ endif
++
+ export COMPONENT_DIRS
+ 
+ # The project Makefile can define a list of components, but if it does not do this we just take all available components
+-- 
+2.25.1
+
