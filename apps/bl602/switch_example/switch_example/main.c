@@ -23,11 +23,11 @@
 #include "st_dev.h"
 #include "device_control.h"
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
-#include "iot_uart_cli.h"
-#include "iot_cli_cmd.h"
+//#include "iot_uart_cli.h"
+//#include "iot_cli_cmd.h"
 
 #include "caps_switch.h"
 
@@ -220,7 +220,7 @@ static void app_main_task(void *arg)
     }
 }
 
-void app_main(void)
+void main(void)
 {
     /**
       SmartThings Device SDK(STDK) aims to make it easier to develop IoT devices by providing

@@ -19,35 +19,46 @@
 
 #include "device_control.h"
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/queue.h"
-#include "freertos/task.h"
-#include "driver/gpio.h"
+#include "FreeRTOS.h"
+#include "queue.h"
+#include "task.h"
+#include <hosal_gpio.h>
+#include <hosal_dma.h>
+
+
+static hosal_gpio_dev_t led_gp;
+static hosal_gpio_dev_t button_gp;
 
 void change_switch_state(int switch_state)
 {
     if (switch_state == SWITCH_OFF) {
-        gpio_set_level(GPIO_OUTPUT_MAINLED, MAINLED_GPIO_OFF);
+        hosal_gpio_output_set(&led_gp, MAINLED_GPIO_OFF);
     } else {
-        gpio_set_level(GPIO_OUTPUT_MAINLED, MAINLED_GPIO_ON);
+        hosal_gpio_output_set(&led_gp, MAINLED_GPIO_ON);
     }
 }
 
 int get_button_event(int* button_event_type, int* button_event_count)
 {
     static uint32_t button_count = 0;
-    static uint32_t button_last_state = BUTTON_GPIO_RELEASED;
+    static uint8_t button_last_state = BUTTON_GPIO_RELEASED;
     static TimeOut_t button_timeout;
     static TickType_t long_press_tick = pdMS_TO_TICKS(BUTTON_LONG_THRESHOLD_MS);
     static TickType_t button_delay_tick = pdMS_TO_TICKS(BUTTON_DELAY_MS);
 
-    uint32_t gpio_level = 0;
+    uint8_t gpio_level = 0;
 
-    gpio_level = gpio_get_level(GPIO_INPUT_BUTTON);
+    if (hosal_gpio_input_get(&button_gp, &gpio_level) != 0) {
+        printf("wrong parameter!");
+        return false;
+    }
     if (button_last_state != gpio_level) {
         /* wait debounce time to ignore small ripple of currunt */
         vTaskDelay( pdMS_TO_TICKS(BUTTON_DEBOUNCE_TIME_MS) );
-        gpio_level = gpio_get_level(GPIO_INPUT_BUTTON);
+        if (hosal_gpio_input_get(&button_gp, &gpio_level) != 0) {
+            printf("wrong parameter!");
+            return false;
+        }
         if (button_last_state != gpio_level) {
             printf("Button event, val: %ld, tick: %lu\n", gpio_level, (uint32_t)xTaskGetTickCount());
             button_last_state = gpio_level;
@@ -131,36 +142,15 @@ void change_led_mode(int noti_led_mode)
 
 void iot_gpio_init(void)
 {
-	gpio_config_t io_conf;
+	led_gp.port = GPIO_OUTPUT_MAINLED;
+    led_gp.config = OUTPUT_OPEN_DRAIN_NO_PULL;
+    hosal_gpio_init(&led_gp);
 
-	io_conf.intr_type = GPIO_INTR_DISABLE;
-	io_conf.mode = GPIO_MODE_OUTPUT;
-	io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_MAINLED;
-	io_conf.pull_down_en = 1;
-	io_conf.pull_up_en = 0;
-	gpio_config(&io_conf);
-	io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_MAINLED_0;
-	gpio_config(&io_conf);
-
-	io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_NOUSE1;
-	gpio_config(&io_conf);
-	io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_NOUSE2;
-	gpio_config(&io_conf);
+    button_gp.port = GPIO_INPUT_BUTTON;
+    button_gp.config = INPUT_PULL_UP;
+    hosal_gpio_init(&button_gp);
 
 
-	io_conf.intr_type = GPIO_INTR_ANYEDGE;
-	io_conf.mode = GPIO_MODE_INPUT;
-	io_conf.pin_bit_mask = 1 << GPIO_INPUT_BUTTON;
-	io_conf.pull_down_en = (BUTTON_GPIO_RELEASED == 0);
-	io_conf.pull_up_en = (BUTTON_GPIO_RELEASED == 1);
-	gpio_config(&io_conf);
-
-	gpio_set_intr_type(GPIO_INPUT_BUTTON, GPIO_INTR_ANYEDGE);
-
-	gpio_install_isr_service(0);
 
 	gpio_set_level(GPIO_OUTPUT_MAINLED, MAINLED_GPIO_ON);
-	gpio_set_level(GPIO_OUTPUT_MAINLED_0, 0);
 }
-
-
