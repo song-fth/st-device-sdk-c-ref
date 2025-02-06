@@ -23,8 +23,6 @@
 #define GPIO_OUTPUT_MAINLED 0
 
 
-#endif
-
 enum switch_onoff_state {
     SWITCH_OFF = 0,
     SWITCH_ON = 1,

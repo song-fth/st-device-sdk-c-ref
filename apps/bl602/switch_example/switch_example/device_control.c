@@ -22,6 +22,7 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "task.h"
+#include <stdbool.h>
 #include <hosal_gpio.h>
 #include <hosal_dma.h>
 
@@ -152,5 +153,5 @@ void iot_gpio_init(void)
 
 
 
-	gpio_set_level(GPIO_OUTPUT_MAINLED, MAINLED_GPIO_ON);
+	//gpio_set_level(GPIO_OUTPUT_MAINLED, MAINLED_GPIO_ON);
 }
