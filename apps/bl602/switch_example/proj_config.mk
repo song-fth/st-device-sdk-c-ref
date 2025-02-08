@@ -54,7 +54,7 @@ CONFIG_MBEDTLS_ECC_USE_HW:=1
 CONFIG_TD_DIAGNOSIS_STA:=1
 
 #blog enable components format :=blog_testc cli vfs helper
-LOG_ENABLED_COMPONENTS:=blog_testc hosal loopset looprt bloop blestack
+LOG_ENABLED_COMPONENTS:=blog_testc hosal loopset looprt bloop blestack src switch_example
 ifeq ($(CONFIG_BT_MESH_SYNC),1)
 LOG_ENABLED_COMPONENTS += blsync_ble
 endif
@@ -75,3 +75,4 @@ CONFIG_STDK_IOT_CORE_NET_MBEDTLS:=y
 CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP=y
 CONFIG_LWIP_USE_HTTPD_FOR_EASYSETUP=y
 CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE:=y
+# CONFIG_MBEDTLS_ECDH_LEGACY_CONTEXT:=y

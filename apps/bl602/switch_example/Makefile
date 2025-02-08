@@ -10,8 +10,8 @@ PROJECT_BOARD := evb
 export PROJECT_PATH PROJECT_BOARD IOT_CORE_PATH
 #CONFIG_TOOLPREFIX :=
  
-BLECONTROLLER_LIBS := std m0s1 m0s1s
-BLECONTROLLER_LIB_DEFAULT := std
+BLECONTROLLER_LIBS := m1s1 m0s1 m0s1s
+BLECONTROLLER_LIB_DEFAULT := m1s1
 BLECONTROLLER_LIB_PREFIX := blecontroller_602_
  
 CPPFLAGS += -I$(PROJECT_PATH)
@@ -31,7 +31,7 @@ endif
 
 COMPONENTS_NETWORK := sntp dns_server
 COMPONENTS_BLSYS   := bltime blfdt blmtd blota bloop loopadc looprt loopset
-COMPONENTS_VFS     := romfs cjson
+COMPONENTS_VFS     := romfs
 
 ifeq ($(CONFIG_BLECONTROLLER_LIB),all)
 COMPONENTS_BLECONTROLLER := $(addprefix $(BLECONTROLLER_LIB_PREFIX), $(BLECONTROLLER_LIBS))
@@ -50,7 +50,7 @@ COMPONENTS_BLE     := $(COMPONENTS_BLECONTROLLER) blestack
 endif
 
 #INCLUDE_COMPONENTS += $(EXTRA_COMPONENT_DIRS)
-INCLUDE_COMPONENTS += freertos_riscv_ram newlibc bl602 bl602_std newlibc wifi blcrypto_suite wifi_manager wpa_supplicant bl_os_adapter wifi_hosal hosal lwip lwip_dhcpd mbedtls_lts vfs yloop utils cli aws-iot httpc netutils blog blog_testc wifi_bt_coex
+INCLUDE_COMPONENTS += freertos_riscv_ram newlibc bl602 bl602_std newlibc wifi blcrypto_suite wifi_manager wpa_supplicant bl_os_adapter wifi_hosal hosal lwip lwip_dhcpd mbedtls_lts vfs yloop utils cli httpc netutils blog blog_testc wifi_bt_coex
 INCLUDE_COMPONENTS += easyflash4 lwip_altcp_tls_mbedtls coredump rfparam_adapter_tmp
 INCLUDE_COMPONENTS += $(COMPONENTS_NETWORK)
 INCLUDE_COMPONENTS += $(COMPONENTS_BLSYS)
@@ -84,4 +84,5 @@ include $(BL60X_SDK_PATH)/make_scripts_riscv/project.mk
 
 ifeq ($(CONFIG_BLECONTROLLER_LIB),all)
 LDFLAGS := $(filter-out $(addprefix -l$(BLECONTROLLER_LIB_PREFIX), $(filter-out $(BLECONTROLLER_LIB_DEFAULT), $(BLECONTROLLER_LIBS))), $(LDFLAGS))
+# LDFLAGS += -Wl,--wrap=main
 endif
