@@ -80,7 +80,11 @@ ifeq ($(CONFIG_AUTO_PTS),1)
 INCLUDE_COMPONENTS += bleptstest
 endif
 endif
+CPPFLAGS += -include $(IOT_CORE_PATH)/src/include/iot_common.h
+#CPPFLAGS += -D MBEDTLS_CONFIG_FILE=$(BL60X_SDK_PATH)/components/security/mbedtls_lts/mbedtls/configs/\"config-stdk.h\"
+#CFLAGS += -I$(BL60X_SDK_PATH)/components/security/mbedtls_lts/mbedtls/configs -DMBEDTLS_CONFIG_FILE="<config-stdk.h>"
 include $(BL60X_SDK_PATH)/make_scripts_riscv/project.mk
+$(info !************ $(CFLAGS))
 
 ifeq ($(CONFIG_BLECONTROLLER_LIB),all)
 LDFLAGS := $(filter-out $(addprefix -l$(BLECONTROLLER_LIB_PREFIX), $(filter-out $(BLECONTROLLER_LIB_DEFAULT), $(BLECONTROLLER_LIBS))), $(LDFLAGS))

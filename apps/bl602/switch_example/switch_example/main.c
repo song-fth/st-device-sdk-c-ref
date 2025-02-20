@@ -20,6 +20,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <bl_sys.h>
+#include <hosal_adc.h>
 
 #include "st_dev.h"
 #include "device_control.h"
@@ -222,6 +224,24 @@ static void app_main_task(void *arg)
     }
 }
 
+static hosal_adc_dev_t adc0;
+
+static void adc_tsen_init()
+{
+    int ret = -1;
+
+    adc0.port = 0;
+    adc0.config.sampling_freq = 300;
+    adc0.config.pin = 4;
+    adc0.config.mode = 0;
+
+    ret = hosal_adc_init(&adc0);
+    if (ret) {
+        printf("adc init error!\r\n");
+        return;
+    }
+}
+
 void app_main(void)
 {
     /**
@@ -252,6 +272,9 @@ void app_main(void)
     int iot_err;
 
     // create a iot context
+    bl_sys_init();
+    adc_tsen_init();
+
     iot_ctx = st_conn_init(onboarding_config, onboarding_config_len, device_info, device_info_len);
     if (iot_ctx != NULL) {
         printf("[APP_FLAG] iot ctx is not null\r\n");

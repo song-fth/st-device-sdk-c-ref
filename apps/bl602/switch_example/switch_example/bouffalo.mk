@@ -28,3 +28,7 @@ endif
 ifeq ($(CONFIG_TD_DIAGNOSIS_STA),1)
 CPPFLAGS += -DTD_DIAGNOSIS_STA
 endif
+
+
+# define json files list
+COMPONENT_EMBED_TXTFILES := onboarding_config.json device_info.json
