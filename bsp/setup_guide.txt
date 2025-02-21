@@ -1,0 +1,7 @@
+clone st-device-sdk-c-ref，切换到dev/bl602_building分支
+cd st-device-sdk-c-ref
+clone st-device-sdk-c,切换到dev/bl602_building分支
+删除iot-core,并将st-device-sdk-c命名为iot-core
+将BL602 SDKclone到本目录，并将名字修改为bl602，cd到bl602，应用上一层目录下的patch
+
+在st-device-sdk-c-ref/apps/bl602/switch_example目录下运行genromp

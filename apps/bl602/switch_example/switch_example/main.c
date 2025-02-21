@@ -16,20 +16,24 @@
  *
  ****************************************************************************/
 
+#include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <bl_sys.h>
+#include <hosal_adc.h>
 
 #include "st_dev.h"
 #include "device_control.h"
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
-#include "iot_uart_cli.h"
-#include "iot_cli_cmd.h"
+//#include "iot_uart_cli.h"
+//#include "iot_cli_cmd.h"
 
 #include "caps_switch.h"
+
 
 // onboarding_config_start is null-terminated string
 extern const uint8_t onboarding_config_start[]    asm("_binary_onboarding_config_json_start");
@@ -220,6 +224,24 @@ static void app_main_task(void *arg)
     }
 }
 
+static hosal_adc_dev_t adc0;
+
+static void adc_tsen_init()
+{
+    int ret = -1;
+
+    adc0.port = 0;
+    adc0.config.sampling_freq = 300;
+    adc0.config.pin = 4;
+    adc0.config.mode = 0;
+
+    ret = hosal_adc_init(&adc0);
+    if (ret) {
+        printf("adc init error!\r\n");
+        return;
+    }
+}
+
 void app_main(void)
 {
     /**
@@ -241,7 +263,7 @@ void app_main(void)
       // process on-boarding procedure. There is nothing more to do on the app side than call the API.
       4. st_conn_start(); (called in function 'connection_start')
      */
-
+    printf("[APP_FLAG] enter main\r\n");
     unsigned char *onboarding_config = (unsigned char *) onboarding_config_start;
     unsigned int onboarding_config_len = onboarding_config_end - onboarding_config_start;
     unsigned char *device_info = (unsigned char *) device_info_start;
@@ -250,8 +272,12 @@ void app_main(void)
     int iot_err;
 
     // create a iot context
+    bl_sys_init();
+    adc_tsen_init();
+
     iot_ctx = st_conn_init(onboarding_config, onboarding_config_len, device_info, device_info_len);
     if (iot_ctx != NULL) {
+        printf("[APP_FLAG] iot ctx is not null\r\n");
         iot_err = st_conn_set_noti_cb(iot_ctx, iot_noti_cb, NULL);
         if (iot_err)
             printf("fail to set notification callback function\n");
@@ -263,8 +289,9 @@ void app_main(void)
     capability_init();
 
     iot_gpio_init();
-    register_iot_cli_cmd();
-    uart_cli_main();
+    //register_iot_cli_cmd();
+    //uart_cli_main();
+    printf("[APP_FLAG] launch app_main_task\r\n");
     xTaskCreate(app_main_task, "app_main_task", 4096, NULL, 10, NULL);
 
     // connect to server
