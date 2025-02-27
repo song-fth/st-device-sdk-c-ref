@@ -1,52 +1,31 @@
-import os
-import subprocess
+#!/usr/bin/env python
+
 import sys
+import os
+import shutil
 
-def install_dependencies():
-    print("Starting to install necessary tools...")
-    try:
-        subprocess.run(['sudo', 'apt-get', 'update'], check=True)
-        subprocess.run(['sudo', 'apt-get', 'install', '-y', 'make', 'gtkterm'], check=True)
-        print("Installation completed.")
-    except subprocess.CalledProcessError:
-        print("Installation failed. Please ensure there are no errors during the installation process.")
-        sys.exit(1)
+BSP_NAME = sys.argv[1]
+CORE_PATH = os.path.join(os.environ["STDK_CORE_PATH"])
+BSP_PATH = os.path.join(os.environ["STDK_REF_PATH"], "bsp", "bl602")
+PATCH_PATH = os.path.join(os.environ["STDK_REF_PATH"], "patches", "bl602")
 
-def is_git_submodule(bsp_name):
-    try:
-        subprocess.run(['git', 'submodule', 'status', f'bsp/{bsp_name}'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-        return True
-    except subprocess.CalledProcessError:
-        return False
+CONFIG_PATH = os.path.join(BSP_PATH, "components", "iot-core_config")
 
-def apply_patch(target_dir, patch_dir, is_git):
-    print(f"apply-patch : {target_dir}")
-    os.chdir(target_dir)
-    
-    for patch in os.listdir(patch_dir):
-        if patch.endswith('.patch'):
-            patch_path = os.path.join(patch_dir, patch)
-            if is_git:
-                subprocess.run(['git', 'am', patch_path])
-            else:
-                subprocess.run(['patch', '-f', '-p1', '<', patch_path], shell=True)
+os.chdir(BSP_PATH)
+os.system("git submodule update --init --recursive")
+os.system("git submodule foreach --recursive git reset --hard")
 
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python script.py <BSP_NAME>")
-        sys.exit(1)
+if os.path.isdir(PATCH_PATH):
+    os.chdir(BSP_PATH)
+    for patchfile in sorted(os.listdir(PATCH_PATH)):
+        if patchfile.endswith(".patch"):
+            os.system("git am " + os.path.join(PATCH_PATH, patchfile))
 
-    bsp_name = sys.argv[1]
-    stdk_ref_path = os.getenv("STDK_REF_PATH")  # Assuming STDK_REF_PATH is set in the environment
-    bsp_path = os.path.join(stdk_ref_path, 'bsp', bsp_name)
-    patch_path = os.path.join(stdk_ref_path, 'patches', bsp_name)
-
-    install_dependencies()
-
-    is_git = is_git_submodule(bsp_name)
-
-    os.chdir(bsp_path)
-    subprocess.run(['git', 'submodule', 'update', '--init', '--recursive'])
-    subprocess.run(['git', 'submodule', 'foreach', '--recursive', 'git', 'reset', '--hard'])
-
-    apply_patch(bsp_path, patch_path, is_git)
+if not os.path.isdir(CONFIG_PATH):
+    if os.path.exists(CONFIG_PATH):
+        os.remove(CONFIG_PATH)
+    os.makedirs(CONFIG_PATH)
+cmake_file = open(os.path.join(CONFIG_PATH, "CMakeLists.txt"), "w")
+cmake_file.write("idf_component_register()")
+cmake_file.close()
+shutil.copy(os.path.join(CORE_PATH, "src", "Kconfig"), os.path.join(BSP_PATH, "components", "iot-core_config", "Kconfig"))
