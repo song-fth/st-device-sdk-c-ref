@@ -24,25 +24,26 @@ This example assumes the following component and capabilities are used. :
 ## SmartThings SDK for Direct Connected Devices - Config
 If you want to use specific SmartThings Device SDK build options, you can directly modify the build configuration file. For this example, SmartThings Device SDK config is saved in 'sdkconfig' file. If you want to change this, please execute the following :
 ```sh
-# python build.py {app_path} {option}
+
 $ cd ~/st-device-sdk-c-ref/
-$ python build.py app/esp32/switch_example menuconfig
+$ vim apps/bl602/switch_example/sdkconfig.h
 ```
 
 ## Test device schematics
-This example uses ESP32 GPIO like below.  
-Please refer below picture for __ESP32-DevKitC__.  
+This example uses BL602 GPIO like below.  
+Please refer below picture for __BL602-IoT-DVK-3S__.  
 > Note: If your device's schematics doesn't match with belows. 
 > Please modify GPIO defines for your device at [device_control.h](main/device_control.h)
 > ```c
-> #define GPIO_INPUT_BUTTON 0
+> #define GPIO_INPUT_BUTTON 1
 > 
-> #define GPIO_OUTPUT_MAINLED 12
-> #define GPIO_OUTPUT_MAINLED_0 26 /* use as ground */
+> #define GPIO_OUTPUT_COLORLED_R 4
+> #define GPIO_OUTPUT_COLORLED_G 5
+> #define GPIO_OUTPUT_COLORLED_B 3
 > ```
 
-### ESP32-DevKitC V4  
-| ESP32 DevKitC                                                     |
+### BL602-IoT-DVK-3S  
+| BL602-IoT-DVK-3S                                                     |
 |-------------------------------------------------------------------|
-|![ESP32_DEVKITC](../../../doc/res/Switch_Example_ESP32_DEVKITC.png) |
+|![BL602-IoT-DVK-3S](../../../doc/res/Light_Example_BL602-IoT-DVK-3S.png) |
 
