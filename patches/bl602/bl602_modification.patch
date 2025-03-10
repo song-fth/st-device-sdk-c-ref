@@ -1,0 +1,159 @@
+diff --git a/components/platform/soc/bl602/bl602/bfl_main.c b/components/platform/soc/bl602/bl602/bfl_main.c
+index fed0d95ca..988a0cbc6 100755
+--- a/components/platform/soc/bl602/bl602/bfl_main.c
++++ b/components/platform/soc/bl602/bl602/bfl_main.c
+@@ -190,8 +190,9 @@ static int get_dts_addr(const char *name, uint32_t *start, uint32_t *off)
+ 
+ static void app_main_entry(void *pvParameters)
+ {
+-    extern int main();
+-    main();
++    extern int app_main();
++    printf("[app_main_entry] enter\r\n");
++    app_main();
+     vTaskDelete(NULL);
+ }
+ 
+@@ -243,7 +244,7 @@ static void aos_loop_proc(void *pvParameters)
+         aos_poll_read_fd(fd_console, aos_cli_event_cb_read_get(), (void*)0x12345678);
+     }
+ #endif
+-
++    printf("!_!_!_!---- create app main task\r\n");
+     xTaskCreate(app_main_entry,
+             (char*)"main",
+             SYS_APP_TASK_STACK_SIZE / sizeof(StackType_t),
+diff --git a/components/platform/soc/bl602/freertos_riscv_ram/config/FreeRTOSConfig.h b/components/platform/soc/bl602/freertos_riscv_ram/config/FreeRTOSConfig.h
+index 9b019366c..1f5069db5 100644
+--- a/components/platform/soc/bl602/freertos_riscv_ram/config/FreeRTOSConfig.h
++++ b/components/platform/soc/bl602/freertos_riscv_ram/config/FreeRTOSConfig.h
+@@ -94,7 +94,7 @@
+ #define configUSE_TICK_HOOK				0
+ #ifndef configUSE_TICKLESS_IDLE
+ //Maybe Compile flags is passed by command line
+-#define configUSE_TICKLESS_IDLE			1
++#define configUSE_TICKLESS_IDLE			0
+ #endif
+ #define configCPU_CLOCK_HZ				( 10 * 1000 * 1000 ) /*QEMU*/
+ #define configTICK_RATE_HZ				( ( TickType_t ) 1000 )
+diff --git a/make_scripts_riscv/component_wrapper.mk b/make_scripts_riscv/component_wrapper.mk
+index 961257c61..1760cc878 100644
+--- a/make_scripts_riscv/component_wrapper.mk
++++ b/make_scripts_riscv/component_wrapper.mk
+@@ -169,6 +169,10 @@ COMPONENT_OBJS := $(foreach obj,$(COMPONENT_OBJS),$(if $(filter $(abspath $(obj)
+ # Remove duplicates
+ COMPONENT_OBJS := $(call uniq,$(COMPONENT_OBJS))
+ 
++# Object files with embedded binaries to add to the component library
++# Correspond to the files named in COMPONENT_EMBED_FILES & COMPONENT_EMBED_TXTFILES
++COMPONENT_EMBED_OBJS ?= $(addsuffix .bin.o,$(notdir $(COMPONENT_EMBED_FILES))) $(addsuffix .txt.o,$(notdir $(COMPONENT_EMBED_TXTFILES)))
++
+ # If we're called to compile something, we'll get passed the COMPONENT_INCLUDES
+ # variable with all the include dirs from all the components in random order. This
+ # means we can accidentally grab a header from another component before grabbing our own.
+@@ -236,7 +240,7 @@ build: $(COMPONENT_LIBRARY)
+ 
+ # Build the archive. We remove the archive first, otherwise ar will get confused if we update
+ # an archive when multiple filenames have the same name (src1/test.o and src2/test.o)
+-$(COMPONENT_LIBRARY): $(COMPONENT_OBJS)
++$(COMPONENT_LIBRARY): $(COMPONENT_OBJS) $(COMPONENT_EMBED_OBJS)
+ 	$(summary) AR $(patsubst $(PWD)/%,%,$(CURDIR))/$@
+ 	rm -f $@
+ 	$(AR) cru $@ $^
+@@ -244,7 +248,7 @@ endif
+ 
+ # If COMPONENT_OWNCLEANTARGET is not set, define a phony clean target
+ ifndef COMPONENT_OWNCLEANTARGET
+-CLEAN_FILES := $(COMPONENT_LIBRARY) $(COMPONENT_OBJS) $(COMPONENT_OBJS:.o=.d) $(COMPONENT_OBJEXCLUDE) $(COMPONENT_OBJEXCLUDE:.o=.d) $(COMPONENT_EXTRA_CLEAN) component_project_vars.mk
++CLEAN_FILES := $(COMPONENT_LIBRARY) $(COMPONENT_OBJS) $(COMPONENT_OBJS:.o=.d) $(COMPONENT_OBJEXCLUDE) $(COMPONENT_OBJEXCLUDE:.o=.d) $(COMPONENT_EMBED_OBJS) $(COMPONENT_EXTRA_CLEAN) component_project_vars.mk
+ .PHONY: clean
+ clean:
+ 	$(summary) RM $(CLEAN_FILES)
+@@ -311,6 +315,39 @@ endef
+ # Generate all the compile target patterns
+ $(foreach srcdir,$(COMPONENT_SRCDIRS), $(eval $(call GenerateCompileTargets,$(srcdir),$(call stripLeadingParentDirs,$(srcdir)))))
+ 
++## Support for embedding binary files into the ELF as symbols
++
++OBJCOPY_EMBED_ARGS := --input-target binary --output-target elf32-littleriscv --binary-architecture riscv --rename-section .data=.rodata.embedded
++
++define GenerateEmbedTarget
++
++# copy the input file into the build dir (using a subdirectory
++# in case the file already exists elsewhere in the build dir)
++embed_bin/$$(notdir $(1)): $(call resolvepath,$(1),$(COMPONENT_PATH)) | embed_bin
++	cp $$< $$@
++
++embed_txt/$$(notdir $(1)): $(call resolvepath,$(1),$(COMPONENT_PATH)) | embed_txt
++	cp $$< $$@
++	printf '\0' >> $$@  # null-terminate text files
++
++# messing about with the embed_X subdirectory then using 'cd' for objcopy is because the
++# full path passed to OBJCOPY makes it into the name of the symbols in the .o file
++$$(notdir $(1)).$(2).o: embed_$(2)/$$(notdir $(1))
++	$(summary) EMBED $$(patsubst $$(PWD)/%,%,$$(CURDIR))/$$@
++	cd embed_$(2); $(OBJCOPY) $(OBJCOPY_EMBED_ARGS) $$(notdir $$<) ../$$@
++
++CLEAN_FILES += embed_$(2)/$$(notdir $(1))
++endef
++
++embed_txt embed_bin:
++	mkdir -p $@
++
++# generate targets to embed binary & text files
++$(foreach binfile,$(COMPONENT_EMBED_FILES), $(eval $(call GenerateEmbedTarget,$(binfile),bin)))
++
++$(foreach txtfile,$(COMPONENT_EMBED_TXTFILES), $(eval $(call GenerateEmbedTarget,$(txtfile),txt)))
++
++
+ else   # COMPONENT_CONFIG_ONLY is set
+ 
+ build:
+diff --git a/make_scripts_riscv/project.mk b/make_scripts_riscv/project.mk
+index 0d54cded0..29ad3c70f 100644
+--- a/make_scripts_riscv/project.mk
++++ b/make_scripts_riscv/project.mk
+@@ -104,7 +104,7 @@ EXTRA_COMPONENT_DIRS ?=
+ COMPONENT_DIRS := $(PROJECT_PATH)/components $(EXTRA_COMPONENT_DIRS) $(BL60X_SDK_PATH)/components $(BL60X_SDK_PATH)/customer_components $(PROJECT_PATH)/$(PROJECT_NAME) $(PROJECT_COMPONENT)
+ endif
+ export COMPONENT_DIRS
+-
++$(info !-----原始component dirs: $(COMPONENT_DIRS))
+ # The project Makefile can define a list of components, but if it does not do this we just take all available components
+ # in the component dirs. A component is COMPONENT_DIRS directory, or immediate subdirectory,
+ # which contains a bouffalo.mk file.
+@@ -141,7 +141,8 @@ COMPONENTS := $(filter $(INCLUDE_COMPONENTS), $(COMPONENTS))
+ COMPONENTS_REAL_PATH := $(filter $(INCLUDE_COMPONENTS_REAL_PATH), $(COMPONENTS_REAL_PATH))
+ endif
+ export COMPONENTS
+-
++$(info !-----过滤后的component dirs: $(COMPONENTS_REAL_PATH))
++$(info !-----过滤后的component: $(COMPONENTS))
+ # Resolve all of COMPONENTS into absolute paths in COMPONENT_PATHS.
+ #
+ # If a component name exists in multiple COMPONENT_DIRS, we take the first match.
+@@ -276,6 +277,7 @@ COMMON_WARNING_FLAGS = -Wall -Werror=all \
+ 	-Wno-error=unused-but-set-variable \
+ 	-Wno-error=unused-variable \
+ 	-Wno-error=deprecated-declarations \
++	-Wno-error=format \
+ 	-Wextra \
+ 	-Wno-unused-parameter -Wno-sign-compare
+ 
+diff --git a/tools/flash_tool/chips/bl602/partition/partition_cfg_2M.toml b/tools/flash_tool/chips/bl602/partition/partition_cfg_2M.toml
+index e8638dc09..2c926995a 100644
+--- a/tools/flash_tool/chips/bl602/partition/partition_cfg_2M.toml
++++ b/tools/flash_tool/chips/bl602/partition/partition_cfg_2M.toml
+@@ -8,9 +8,9 @@ type = 0
+ name = "FW"
+ device = 0
+ address0 = 0x10000
+-size0 = 0xD8000
+-address1 = 0xE8000
+-size1 = 0x88000
++size0 = 0xF8000
++address1 = 0x108000
++size1 = 0x68000
+ # compressed image must set len,normal image can left it to 0
+ len = 0
+ 
