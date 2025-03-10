@@ -1,15 +1,15 @@
-From 0f6eb50761622b1152a0783829e50ba4e1041008 Mon Sep 17 00:00:00 2001
+From 112f65ad7a03aef1ec0e7f9d2421e767c26fa755 Mon Sep 17 00:00:00 2001
 From: zihan19-song <zihan19.song@samsung.com>
-Date: Mon, 10 Mar 2025 23:13:38 +0800
-Subject: [PATCH] Add stdk compile configuration for bl602
+Date: Tue, 11 Mar 2025 00:08:28 +0800
+Subject: [PATCH] Add stdk compile for bl602
 
 ---
- .../platform/soc/bl602/bl602/bfl_main.c       |  7 ++--
- .../config/FreeRTOSConfig.h                   |  2 +-
- make_scripts_riscv/component_wrapper.mk       | 41 ++++++++++++++++++-
- make_scripts_riscv/project.mk                 |  6 ++-
- .../bl602/partition/partition_cfg_2M.toml     |  6 +--
- 5 files changed, 51 insertions(+), 11 deletions(-)
+ .../platform/soc/bl602/bl602/bfl_main.c       |   7 +-
+ .../config/FreeRTOSConfig.h                   |   2 +-
+ make_scripts_riscv/component_wrapper.mk       |  41 +++-
+ make_scripts_riscv/project.mk                 |   6 +-
+ .../bl602/partition/partition_cfg_2M.toml     | 188 +++++++++---------
+ 5 files changed, 142 insertions(+), 102 deletions(-)
 
 diff --git a/components/platform/soc/bl602/bl602/bfl_main.c b/components/platform/soc/bl602/bl602/bfl_main.c
 index fed0d95ca..988a0cbc6 100755
@@ -123,7 +123,7 @@ index 961257c61..1760cc878 100644
  
  build:
 diff --git a/make_scripts_riscv/project.mk b/make_scripts_riscv/project.mk
-index 0d54cded0..29ad3c70f 100644
+index 0d54cded0..70011e2da 100644
 --- a/make_scripts_riscv/project.mk
 +++ b/make_scripts_riscv/project.mk
 @@ -104,7 +104,7 @@ EXTRA_COMPONENT_DIRS ?=
@@ -131,7 +131,7 @@ index 0d54cded0..29ad3c70f 100644
  endif
  export COMPONENT_DIRS
 -
-+$(info !-----原始component dirs: $(COMPONENT_DIRS))
++# $(info !-----原始component dirs: $(COMPONENT_DIRS))
  # The project Makefile can define a list of components, but if it does not do this we just take all available components
  # in the component dirs. A component is COMPONENT_DIRS directory, or immediate subdirectory,
  # which contains a bouffalo.mk file.
@@ -140,8 +140,8 @@ index 0d54cded0..29ad3c70f 100644
  endif
  export COMPONENTS
 -
-+$(info !-----过滤后的component dirs: $(COMPONENTS_REAL_PATH))
-+$(info !-----过滤后的component: $(COMPONENTS))
++# $(info !-----过滤后的component dirs: $(COMPONENTS_REAL_PATH))
++# $(info !-----过滤后的component: $(COMPONENTS))
  # Resolve all of COMPONENTS into absolute paths in COMPONENT_PATHS.
  #
  # If a component name exists in multiple COMPONENT_DIRS, we take the first match.
@@ -154,22 +154,198 @@ index 0d54cded0..29ad3c70f 100644
  	-Wno-unused-parameter -Wno-sign-compare
  
 diff --git a/tools/flash_tool/chips/bl602/partition/partition_cfg_2M.toml b/tools/flash_tool/chips/bl602/partition/partition_cfg_2M.toml
-index e8638dc09..2c926995a 100644
+index e8638dc09..95110f107 100644
 --- a/tools/flash_tool/chips/bl602/partition/partition_cfg_2M.toml
 +++ b/tools/flash_tool/chips/bl602/partition/partition_cfg_2M.toml
-@@ -8,9 +8,9 @@ type = 0
- name = "FW"
- device = 0
- address0 = 0x10000
+@@ -1,94 +1,94 @@
+-[pt_table]
+-#partition table is 4K in size
+-address0 = 0xE000
+-address1 = 0xF000
+-
+-[[pt_entry]]
+-type = 0
+-name = "FW"
+-device = 0
+-address0 = 0x10000
 -size0 = 0xD8000
 -address1 = 0xE8000
 -size1 = 0x88000
+-# compressed image must set len,normal image can left it to 0
+-len = 0
+-
+-[[pt_entry]]
+-type = 2
+-name = "mfg"
+-device = 0
+-address0 = 0x170000
+-size0 = 0x32000
+-address1 = 0
+-size1 = 0
+-# compressed image must set len,normal image can left it to 0
+-len = 0
+-
+-[[pt_entry]]
+-type = 3
+-name = "media"
+-device = 0
+-address0 = 0x1A2000
+-size0 = 0x47000
+-address1 = 0
+-size1 = 0
+-# compressed image must set len,normal image can left it to 0
+-len = 0
+-
+-[[pt_entry]]
+-type = 4
+-name = "PSM"
+-device = 0
+-address0 = 0x1E9000
+-size0 = 0x8000
+-address1 = 0
+-size1 = 0
+-# compressed image must set len,normal image can left it to 0
+-len = 0
+-
+-[[pt_entry]]
+-type = 5
+-name = "KEY"
+-device = 0
+-address0 = 0x1F1000
+-size0 = 0x2000
+-address1 = 0
+-size1 = 0
+-# compressed image must set len,normal image can left it to 0
+-len = 0
+-
+-[[pt_entry]]
+-type = 6
+-name = "DATA"
+-device = 0
+-address0 = 0x1F3000
+-size0 = 0x5000
+-address1 = 0
+-size1 = 0
+-# compressed image must set len,normal image can left it to 0
+-len = 0
+-
+-
+-[[pt_entry]]
+-type = 7
+-name = "factory"
+-device = 0
+-address0 = 0x1F8000
+-size0 = 0x7000
+-address1 = 0
+-size1 = 0
+-# compressed image must set len,normal image can left it to 0
+-len = 0
+-
+-#if user want to put RF calibration data on flash, uncomment following pt entry
+-#[[pt_entry]]
+-#type = 8
+-#name = "rf_para"
+-#device = 0
+-#address0 = 0x1FF000
+-#size0 = 0x1000
+-#address1 = 0
+-#size1 = 0
+-## compressed image must set len,normal image can left it to 0
+-#len = 0
++[pt_table]
++#partition table is 4K in size
++address0 = 0xE000
++address1 = 0xF000
++
++[[pt_entry]]
++type = 0
++name = "FW"
++device = 0
++address0 = 0x10000
 +size0 = 0xF8000
 +address1 = 0x108000
 +size1 = 0x68000
- # compressed image must set len,normal image can left it to 0
- len = 0
- 
++# compressed image must set len,normal image can left it to 0
++len = 0
++
++[[pt_entry]]
++type = 2
++name = "mfg"
++device = 0
++address0 = 0x170000
++size0 = 0x32000
++address1 = 0
++size1 = 0
++# compressed image must set len,normal image can left it to 0
++len = 0
++
++[[pt_entry]]
++type = 3
++name = "media"
++device = 0
++address0 = 0x1A2000
++size0 = 0x47000
++address1 = 0
++size1 = 0
++# compressed image must set len,normal image can left it to 0
++len = 0
++
++[[pt_entry]]
++type = 4
++name = "PSM"
++device = 0
++address0 = 0x1E9000
++size0 = 0x8000
++address1 = 0
++size1 = 0
++# compressed image must set len,normal image can left it to 0
++len = 0
++
++[[pt_entry]]
++type = 5
++name = "KEY"
++device = 0
++address0 = 0x1F1000
++size0 = 0x2000
++address1 = 0
++size1 = 0
++# compressed image must set len,normal image can left it to 0
++len = 0
++
++[[pt_entry]]
++type = 6
++name = "DATA"
++device = 0
++address0 = 0x1F3000
++size0 = 0x5000
++address1 = 0
++size1 = 0
++# compressed image must set len,normal image can left it to 0
++len = 0
++
++
++[[pt_entry]]
++type = 7
++name = "factory"
++device = 0
++address0 = 0x1F8000
++size0 = 0x7000
++address1 = 0
++size1 = 0
++# compressed image must set len,normal image can left it to 0
++len = 0
++
++#if user want to put RF calibration data on flash, uncomment following pt entry
++#[[pt_entry]]
++#type = 8
++#name = "rf_para"
++#device = 0
++#address0 = 0x1FF000
++#size0 = 0x1000
++#address1 = 0
++#size1 = 0
++## compressed image must set len,normal image can left it to 0
++#len = 0
 -- 
 2.25.1
 
