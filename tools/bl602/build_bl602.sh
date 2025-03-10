@@ -35,7 +35,7 @@ elif [ "${3}" = "flash" ]; then
     fi
     "${BL_FLASH_TOOL}" --chipname="${CHIP_NAME}" --baudrate="${BAUDRATE}" --port="${UART_PORT}" --pt="${PARTITION_TABLE}" --dts=  --firmware="${APP_FIRMWARE_PATH}"
 elif [ "${3}" = "monitor" ]; then
-    /usr/bin/python3 "${STDK_PATH}/tools/${BSP_NAME}/monitor.py"
+    /usr/bin/python3 "${STDK_PATH}/tools/${BSP_NAME}/monitor.py" "${4}"
 fi
 
 
