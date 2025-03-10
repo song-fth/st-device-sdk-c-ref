@@ -35,7 +35,7 @@ function apply_patch() {
     do
         if [[ "${patch}" == *".patch" ]]; then
             if [ "${IS_GIT}" == "1" ]; then
-                git am ${patch}
+                git apply ${patch}
             else
                 patch -f -p1 < ${patch}
             fi
