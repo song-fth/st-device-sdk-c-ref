@@ -17,6 +17,9 @@ install_dependencies
 BSP_NAME=${1}
 BSP_PATH=${STDK_REF_PATH}/bsp/${BSP_NAME}
 PATCH_PATH=${STDK_REF_PATH}/patches/${BSP_NAME}
+CORE_PATH=${STDK_REF_PATH}/iot-core
+LIBSODIUM_PATH=${CORE_PATH}/src/deps/libsodium/libsodium
+JSON_PATH=${CORE_PATH}/src/deps/json/cJSON
 
 git submodule status bsp/${BSP_NAME} &> /dev/null
 if [ "$?" == "0" ]; then
@@ -43,6 +46,14 @@ function apply_patch() {
     done
     popd &> /dev/null
 }
+ 
+pushd {LIBSODIUM_PATH} &> /dev/null
+git submodule update --init --recursive
+git submodule foreach --recursive git reset --hard
+
+pushd {LIBSODIUM_PATH} &> /dev/null
+git submodule update --init --recursive
+git submodule foreach --recursive git reset --hard
 
 pushd ${BSP_PATH} &> /dev/null
 git submodule update --init --recursive
