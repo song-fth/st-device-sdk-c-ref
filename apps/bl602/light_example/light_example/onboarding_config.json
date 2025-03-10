@@ -1,0 +1,19 @@
+{
+  "onboardingConfig": {
+    "deviceOnboardingId": "Light",
+    "mnId": "fCnc",
+    "setupId": "004",
+    "vid": "ST_fd5c40b7-bb2d-443b-87fe-f16b7ec8a352",
+    "deviceTypeId": "Light",
+    "ownershipValidationTypes": [
+      "JUSTWORKS"
+    ],
+    "identityType": "ED25519",
+    "deviceIntegrationProfileKey": {
+      "id": "ec323bea-7a22-4439-afa4-8ad77f739f7b",
+      "majorVersion": 0,
+      "minorVersion": 1
+    },
+    "productId": "cc26b4e0-c4d9-48a3-90fe-54a5567f5015"
+  }
+}
