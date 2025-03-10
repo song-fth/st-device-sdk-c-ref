@@ -19,7 +19,7 @@ if os.path.isdir(PATCH_PATH):
     os.chdir(BSP_PATH)
     for patchfile in sorted(os.listdir(PATCH_PATH)):
         if patchfile.endswith(".patch"):
-            os.system("git am " + os.path.join(PATCH_PATH, patchfile))
+            os.system("git apply " + os.path.join(PATCH_PATH, patchfile))
 
 if not os.path.isdir(CONFIG_PATH):
     if os.path.exists(CONFIG_PATH):
