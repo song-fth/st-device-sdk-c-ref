@@ -1,3 +1,16 @@
+From 0f6eb50761622b1152a0783829e50ba4e1041008 Mon Sep 17 00:00:00 2001
+From: zihan19-song <zihan19.song@samsung.com>
+Date: Mon, 10 Mar 2025 23:13:38 +0800
+Subject: [PATCH] Add stdk compile configuration for bl602
+
+---
+ .../platform/soc/bl602/bl602/bfl_main.c       |  7 ++--
+ .../config/FreeRTOSConfig.h                   |  2 +-
+ make_scripts_riscv/component_wrapper.mk       | 41 ++++++++++++++++++-
+ make_scripts_riscv/project.mk                 |  6 ++-
+ .../bl602/partition/partition_cfg_2M.toml     |  6 +--
+ 5 files changed, 51 insertions(+), 11 deletions(-)
+
 diff --git a/components/platform/soc/bl602/bl602/bfl_main.c b/components/platform/soc/bl602/bl602/bfl_main.c
 index fed0d95ca..988a0cbc6 100755
 --- a/components/platform/soc/bl602/bl602/bfl_main.c
@@ -157,3 +170,6 @@ index e8638dc09..2c926995a 100644
  # compressed image must set len,normal image can left it to 0
  len = 0
  
+-- 
+2.25.1
+
