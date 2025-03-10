@@ -28,12 +28,12 @@ if [ "${3}" = "" ]; then
 elif [ "${3}" = "clean" ]; then
     rm -rf ${BUILD_OUTPUT_PATH}
 elif [ "${3}" = "erase_flash" ]; then
-    "${BL_FLASH_TOOL}" --chipname="${CHIP_NAME}" --baudrate="${BAUDRATE}" --port="${UART_PORT}" --pt="${PARTITION_TABLE}" --dts=  --firmware="${APP_FIRMWARE_PATH}" --erase
+    "${BL_FLASH_TOOL}" --chipname="${CHIP_NAME}" --baudrate="${BAUDRATE}" --port="${4}" --pt="${PARTITION_TABLE}" --dts=  --firmware="${APP_FIRMWARE_PATH}" --erase
 elif [ "${3}" = "flash" ]; then
     if [ ! -d "${BUILD_OUTPUT_PATH}" ]; then
         make CONFIG_CHIP_NAME=BL602 CONFIG_LINK_ROM=1 CONFIG_BLE_TP_SERVER=1 CONFIG_BLECONTROLLER_LIB=all -j PTS_GAP_SLAVER_CONFIG_INDICATE_CHARC=1 CONFIG_BT_STACK_PTS=1
     fi
-    "${BL_FLASH_TOOL}" --chipname="${CHIP_NAME}" --baudrate="${BAUDRATE}" --port="${UART_PORT}" --pt="${PARTITION_TABLE}" --dts=  --firmware="${APP_FIRMWARE_PATH}"
+    "${BL_FLASH_TOOL}" --chipname="${CHIP_NAME}" --baudrate="${BAUDRATE}" --port="${4}" --pt="${PARTITION_TABLE}" --dts=  --firmware="${APP_FIRMWARE_PATH}"
 elif [ "${3}" = "monitor" ]; then
     /usr/bin/python3 "${STDK_PATH}/tools/${BSP_NAME}/monitor.py" "${4}"
 fi
