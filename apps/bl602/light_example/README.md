@@ -22,11 +22,10 @@ This example assumes the following component and capabilities are used. :
 (`healthCheck` capability is automatically added by Developer Workspace. It doesn't need handler at device side)
 
 ## SmartThings SDK for Direct Connected Devices - Config
-If you want to use specific SmartThings Device SDK build options, you can directly modify the build configuration file. For this example, SmartThings Device SDK config is saved in 'sdkconfig' file. If you want to change this, please execute the following :
+If you want to use specific SmartThings Device SDK build options, you can directly modify the build configuration file. For this example, SmartThings Device SDK config is saved in 'proj_config.mk' file. If you want to change this, please execute the following :
 ```sh
-
 $ cd ~/st-device-sdk-c-ref/
-$ vim apps/bl602/switch_example/sdkconfig.h
+$ vim apps/bl602/switch_example/proj_config.mk
 ```
 
 ## Test device schematics
@@ -36,7 +35,6 @@ Please refer below picture for __BL602-IoT-DVK-3S__.
 > Please modify GPIO defines for your device at [device_control.h](main/device_control.h)
 > ```c
 > #define GPIO_INPUT_BUTTON 1
-> 
 > #define GPIO_OUTPUT_COLORLED_R 4
 > #define GPIO_OUTPUT_COLORLED_G 5
 > #define GPIO_OUTPUT_COLORLED_B 3
