@@ -4,15 +4,21 @@ import sys
 import subprocess
 from pathlib import Path
 
+#!/usr/bin/env python3
+import os
+import sys
+import subprocess
+from pathlib import Path
+
 def validate_args():
-    if len(sys.argv) < 4:
-        print(f"Usage: {sys.argv[0]} <BSP_NAME> <PROJECT_TITLE> <COMMAND> [PORT]")
-        print("Available commands: build, clean, erase_flash, flash, monitor")
+    if len(sys.argv) < 3:
+        print(f"Usage: {sys.argv[0]} <BSP_NAME> <PROJECT_TITLE> [COMMAND] [PORT]")
+        print("Available commands: build(default), clean, erase_flash, flash, monitor")
         sys.exit(1)
 
     bsp_name = sys.argv[1]
     project_title = sys.argv[2]
-    command = sys.argv[3]
+    command = sys.argv[3] if len(sys.argv) >=4 else "build"
     
     port = None
     if command in ("erase_flash", "flash", "monitor"):
@@ -20,7 +26,7 @@ def validate_args():
             print(f"Error: {command} command requires port argument")
             sys.exit(1)
         port = sys.argv[4]
-    elif len(sys.argv) > 4:
+    elif len(sys.argv) >=5:
         print(f"Warning: Extra argument '{sys.argv[4]}' will be ignored")
 
     return bsp_name, project_title, command, port
