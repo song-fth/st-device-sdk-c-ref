@@ -43,5 +43,5 @@ Please refer below picture for __BL602-IoT-DVK-3S__.
 ### BL602-IoT-DVK-3S  
 | BL602-IoT-DVK-3S                                                     |
 |-------------------------------------------------------------------|
-|![BL602-IoT-DVK-3S](../../../doc/res/Light_Example_BL602-IoT-DVK-3S.png) |
+|![BL602-IoT-DVK-3S](../../../doc/res/BL602-IoT-DVK-3S.jpg) |
 
