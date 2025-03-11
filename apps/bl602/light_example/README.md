@@ -18,6 +18,12 @@ This example assumes the following component and capabilities are used. :
 `main` component  
 - `healthCheck` capability  
 - `switch` capability  
+- `switchLevel` capability  
+- `colorTemperature` capability  
+- `activityLightingMode` capability  
+
+`monitor` component  
+- `dustSensor` capability 
 
 (`healthCheck` capability is automatically added by Developer Workspace. It doesn't need handler at device side)
 
@@ -25,7 +31,7 @@ This example assumes the following component and capabilities are used. :
 If you want to use specific SmartThings Device SDK build options, you can directly modify the build configuration file. For this example, SmartThings Device SDK config is saved in 'proj_config.mk' file. If you want to change this, please execute the following :
 ```sh
 $ cd ~/st-device-sdk-c-ref/
-$ vim apps/bl602/switch_example/proj_config.mk
+$ vim apps/bl602/light_example/proj_config.mk
 ```
 
 ## Test device schematics

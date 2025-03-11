@@ -35,10 +35,7 @@ Please refer below picture for __BL602-IoT-DVK-3S__.
 > Please modify GPIO defines for your device at [device_control.h](main/device_control.h)
 > ```c
 > #define GPIO_INPUT_BUTTON 1
-> 
-> #define GPIO_OUTPUT_COLORLED_R 4
-> #define GPIO_OUTPUT_COLORLED_G 5
-> #define GPIO_OUTPUT_COLORLED_B 3
+> #define GPIO_OUTPUT_MAINLED 0
 > ```
 
 ### BL602-IoT-DVK-3S  
