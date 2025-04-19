@@ -19,10 +19,11 @@
 
 #include "device_control.h"
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/queue.h"
-#include "freertos/task.h"
-#include "driver/gpio.h"
+#include "FreeRTOS.h"
+#include "queue.h"
+#include "task.h"
+#include "gpio.h"
+
 
 void change_switch_state(int switch_state)
 {
