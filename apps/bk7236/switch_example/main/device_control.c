@@ -22,33 +22,40 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "task.h"
-#include "gpio.h"
+#include "driver/gpio_types.h"
+#include "bk_gpio.h"
+#include <driver/gpio.h>
+#include "gpio_driver.h"
 
 
 void change_switch_state(int switch_state)
 {
     if (switch_state == SWITCH_OFF) {
-        gpio_set_level(GPIO_OUTPUT_MAINLED, MAINLED_GPIO_OFF);
+        bk_gpio_set_output_low(GPIO_OUTPUT_MAINLED_R);
+        bk_gpio_set_output_low(GPIO_OUTPUT_MAINLED_G);
+        bk_gpio_set_output_low(GPIO_OUTPUT_MAINLED_B);
     } else {
-        gpio_set_level(GPIO_OUTPUT_MAINLED, MAINLED_GPIO_ON);
+        bk_gpio_set_output_high(GPIO_OUTPUT_MAINLED_R);
+        bk_gpio_set_output_high(GPIO_OUTPUT_MAINLED_G);
+        bk_gpio_set_output_high(GPIO_OUTPUT_MAINLED_B);
     }
 }
 
 int get_button_event(int* button_event_type, int* button_event_count)
 {
     static uint32_t button_count = 0;
-    static uint32_t button_last_state = BUTTON_GPIO_RELEASED;
+    bool button_last_state = BUTTON_GPIO_RELEASED;
     static TimeOut_t button_timeout;
     static TickType_t long_press_tick = pdMS_TO_TICKS(BUTTON_LONG_THRESHOLD_MS);
     static TickType_t button_delay_tick = pdMS_TO_TICKS(BUTTON_DELAY_MS);
 
     uint32_t gpio_level = 0;
 
-    gpio_level = gpio_get_level(GPIO_INPUT_BUTTON);
+    gpio_level = bk_gpio_get_input(GPIO_INPUT_BUTTON);
     if (button_last_state != gpio_level) {
         /* wait debounce time to ignore small ripple of currunt */
         vTaskDelay( pdMS_TO_TICKS(BUTTON_DEBOUNCE_TIME_MS) );
-        gpio_level = gpio_get_level(GPIO_INPUT_BUTTON);
+        gpio_level = bk_gpio_get_input(GPIO_INPUT_BUTTON);
         if (button_last_state != gpio_level) {
             printf("Button event, val: %ld, tick: %lu\n", gpio_level, (uint32_t)xTaskGetTickCount());
             button_last_state = gpio_level;
@@ -132,36 +139,32 @@ void change_led_mode(int noti_led_mode)
 
 void iot_gpio_init(void)
 {
-	gpio_config_t io_conf;
+	gpio_config_t io_conf = {0};
+    bk_gpio_driver_init();
 
-	io_conf.intr_type = GPIO_INTR_DISABLE;
-	io_conf.mode = GPIO_MODE_OUTPUT;
-	io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_MAINLED;
-	io_conf.pull_down_en = 1;
-	io_conf.pull_up_en = 0;
-	gpio_config(&io_conf);
-	io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_MAINLED_0;
-	gpio_config(&io_conf);
+	io_conf.func_mode = GPIO_SECOND_FUNC_DISABLE;
+    io_conf.io_mode = GPIO_OUTPUT_ENABLE;
+    io_conf.pull_mode = GPIO_PULL_UP_EN;
 
-	io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_NOUSE1;
-	gpio_config(&io_conf);
-	io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_NOUSE2;
-	gpio_config(&io_conf);
+    gpio_dev_unmap(GPIO_OUTPUT_MAINLED_G);
+    gpio_dev_unmap(GPIO_OUTPUT_MAINLED_R);
+    gpio_dev_unmap(GPIO_OUTPUT_MAINLED_B);
 
+    bk_gpio_set_config(GPIO_OUTPUT_MAINLED_G, &io_conf);
+    bk_gpio_set_config(GPIO_OUTPUT_MAINLED_R, &io_conf);
+    bk_gpio_set_config(GPIO_OUTPUT_MAINLED_B, &io_conf);
 
-	io_conf.intr_type = GPIO_INTR_ANYEDGE;
-	io_conf.mode = GPIO_MODE_INPUT;
-	io_conf.pin_bit_mask = 1 << GPIO_INPUT_BUTTON;
-	io_conf.pull_down_en = (BUTTON_GPIO_RELEASED == 0);
-	io_conf.pull_up_en = (BUTTON_GPIO_RELEASED == 1);
-	gpio_config(&io_conf);
+    bk_gpio_set_output_low(GPIO_OUTPUT_MAINLED_G);
+    bk_gpio_set_output_low(GPIO_OUTPUT_MAINLED_R);
+    bk_gpio_set_output_low(GPIO_OUTPUT_MAINLED_B);
 
-	gpio_set_intr_type(GPIO_INPUT_BUTTON, GPIO_INTR_ANYEDGE);
+	io_conf.func_mode = GPIO_SECOND_FUNC_DISABLE;
+    io_conf.io_mode = GPIO_INPUT_ENABLE;
+    io_conf.pull_mode = GPIO_PULL_UP_EN;
 
-	gpio_install_isr_service(0);
+    gpio_dev_unmap(GPIO_INPUT_BUTTON);
 
-	gpio_set_level(GPIO_OUTPUT_MAINLED, MAINLED_GPIO_ON);
-	gpio_set_level(GPIO_OUTPUT_MAINLED_0, 0);
+    bk_gpio_set_config(GPIO_INPUT_BUTTON, &io_conf);
 }
 
 

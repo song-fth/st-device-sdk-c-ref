@@ -15,7 +15,7 @@
  * language governing permissions and limitations under the License.
  *
  ****************************************************************************/
-
+#include <driver/hal/hal_gpio_types.h>
 
 //#define CONFIG_TARGET_WEMOS_D1_R32
 #ifdef CONFIG_TARGET_WEMOS_D1_R32
@@ -29,7 +29,7 @@
 #define GPIO_OUTPUT_NOUSE2 25
 #else // ESP32_DEVKITC_V4
 
-#define GPIO_INPUT_BUTTON 0
+#define GPIO_INPUT_BUTTON 28
 
 #define GPIO_OUTPUT_MAINLED 12
 #define GPIO_OUTPUT_MAINLED_0 26 /* use as ground */
@@ -38,6 +38,10 @@
 #define GPIO_OUTPUT_NOUSE2 27
 
 #endif
+
+#define GPIO_OUTPUT_MAINLED_G ( GPIO_32 )
+#define GPIO_OUTPUT_MAINLED_R ( GPIO_34 )
+#define GPIO_OUTPUT_MAINLED_B ( GPIO_36 )
 
 enum switch_onoff_state {
     SWITCH_OFF = 0,
@@ -59,6 +63,9 @@ enum button_gpio_state {
     BUTTON_GPIO_RELEASED = 1,
     BUTTON_GPIO_PRESSED = 0,
 };
+
+#define BUTTON_GPIO_RELEASED    true
+#define BUTTON_GPIO_PRESSED     false
 
 #define BUTTON_DEBOUNCE_TIME_MS 20
 #define BUTTON_LONG_THRESHOLD_MS 5000
