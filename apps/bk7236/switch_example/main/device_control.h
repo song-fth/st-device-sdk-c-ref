@@ -17,17 +17,7 @@
  ****************************************************************************/
 #include <driver/hal/hal_gpio_types.h>
 
-//#define CONFIG_TARGET_WEMOS_D1_R32
-#ifdef CONFIG_TARGET_WEMOS_D1_R32
 
-#define GPIO_INPUT_BUTTON 18
-
-#define GPIO_OUTPUT_MAINLED 16
-#define GPIO_OUTPUT_MAINLED_0 26 /* use as ground */
-
-#define GPIO_OUTPUT_NOUSE1 17
-#define GPIO_OUTPUT_NOUSE2 25
-#else // ESP32_DEVKITC_V4
 
 #define GPIO_INPUT_BUTTON 28
 
@@ -37,7 +27,6 @@
 #define GPIO_OUTPUT_NOUSE1 14
 #define GPIO_OUTPUT_NOUSE2 27
 
-#endif
 
 #define GPIO_OUTPUT_MAINLED_G ( GPIO_32 )
 #define GPIO_OUTPUT_MAINLED_R ( GPIO_34 )

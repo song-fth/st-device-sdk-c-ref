@@ -1,0 +1,80 @@
+diff --git a/components/bk_rtos/freertos/FreeRTOSConfig.h b/components/bk_rtos/freertos/FreeRTOSConfig.h
+index a99aacc0..de4a5263 100644
+--- a/components/bk_rtos/freertos/FreeRTOSConfig.h
++++ b/components/bk_rtos/freertos/FreeRTOSConfig.h
+@@ -137,7 +137,7 @@
+ #define configSUPPORT_STATIC_ALLOCATION            1
+ #endif
+ 
+-#define configMAX_PRIORITIES                        ( 10 )
++#define configMAX_PRIORITIES                        ( 12 )
+ #define configUSE_PREEMPTION                        1
+ #define configMINIMAL_STACK_SIZE                    ( ( unsigned short ) (768/2) )
+ #define configMAX_TASK_NAME_LEN                     ( 16 )
+diff --git a/components/lwip_intf_v2_1/CMakeLists.txt b/components/lwip_intf_v2_1/CMakeLists.txt
+index 1134d3f5..cf8585b0 100755
+--- a/components/lwip_intf_v2_1/CMakeLists.txt
++++ b/components/lwip_intf_v2_1/CMakeLists.txt
+@@ -9,6 +9,7 @@ list(APPEND incs
+ 	lwip-2.1.2/src/include/netif
+ 	lwip-2.1.2/src/include/lwip
+ 	lwip-2.1.2/src/include/lwip/priv
++	lwip-2.1.2/src/include/compat/posix
+ 	)
+ 
+ 	list(APPEND srcs
+@@ -101,3 +102,4 @@ armino_component_register(SRCS "${srcs}"
+ 	REQUIRES driver
+ 	PRIV_REQUIRES bk_common bk_wifi bk_rtos os_source
+ 	)
++message("*!*!*! lwip include: ${incs}")
+\ No newline at end of file
+diff --git a/components/mbedtls/mbedtls-port/inc/tls_config.h b/components/mbedtls/mbedtls-port/inc/tls_config.h
+index ec13b91a..307e1a02 100755
+--- a/components/mbedtls/mbedtls-port/inc/tls_config.h
++++ b/components/mbedtls/mbedtls-port/inc/tls_config.h
+@@ -3464,6 +3464,7 @@ extern void tls_mbedtls_mem_free(void *ptr);
+ #define MBEDTLS_CIPHER_PADDING_ZEROS
+ #define MBEDTLS_ECP_DP_SECP256R1_ENABLED
+ #define MBEDTLS_ECP_DP_SECP384R1_ENABLED
++#define MBEDTLS_ECP_DP_CURVE25519_ENABLED
+ #define MBEDTLS_ECP_NIST_OPTIM
+ #define MBEDTLS_ECDH_LEGACY_CONTEXT
+ #define MBEDTLS_KEY_EXCHANGE_ECDHE_RSA_ENABLED
+diff --git a/tools/build_tools/cmake/component.cmake b/tools/build_tools/cmake/component.cmake
+index e09d5696..86a4a5f0 100644
+--- a/tools/build_tools/cmake/component.cmake
++++ b/tools/build_tools/cmake/component.cmake
+@@ -80,7 +80,7 @@ macro(__component_set_properties)
+     # Fill in the rest of component property
+     __component_set_property(${component_target} SRCS "${sources}")
+     __component_set_property(${component_target} INCLUDE_DIRS "${__INCLUDE_DIRS}")
+-
++message("------------------------includes: ${__INCLUDE_DIRS}")
+     if(type STREQUAL LIBRARY)
+         __component_set_property(${component_target} PRIV_INCLUDE_DIRS "${__PRIV_INCLUDE_DIRS}")
+     endif()
+@@ -131,7 +131,6 @@ function(__component_loop_sub_dirs var component_dir)
+             OUTPUT_VARIABLE ouput_strings
+             RESULT_VARIABLE result
+         )
+-
+         if ("${ouput_strings}" MATCHES "armino_component_register_call_subdirs")
+             set(res 1)
+         endif()
+diff --git a/tools/build_tools/cmake/utilities.cmake b/tools/build_tools/cmake/utilities.cmake
+index 7043ea69..23e61bed 100644
+--- a/tools/build_tools/cmake/utilities.cmake
++++ b/tools/build_tools/cmake/utilities.cmake
+@@ -114,9 +114,9 @@ function(target_add_binary_data target embed_file embed_type)
+         -D "SOURCE_FILE=${embed_srcfile}"
+         ${rename_to_arg}
+         -D "FILE_TYPE=${embed_type}"
+-        -P "${armino_path}/tools/cmake/scripts/data_file_embed_asm.cmake"
++        -P "${armino_path}/tools/build_tools/cmake/scripts/data_file_embed_asm.cmake"
+         MAIN_DEPENDENCY "${embed_file}"
+-        DEPENDS "${armino_path}/tools/cmake/scripts/data_file_embed_asm.cmake" ${__DEPENDS}
++        DEPENDS "${armino_path}/tools/build_tools/cmake/scripts/data_file_embed_asm.cmake" ${__DEPENDS}
+         WORKING_DIRECTORY "${build_dir}"
+         VERBATIM)
+ 

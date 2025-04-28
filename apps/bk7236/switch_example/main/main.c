@@ -22,12 +22,13 @@
 #include <sys/socket.h>
 #include "st_dev.h"
 #include "device_control.h"
+#include "bk_private/bk_init.h"
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
-#include "iot_uart_cli.h"
-#include "iot_cli_cmd.h"
+//#include "iot_uart_cli.h"
+//#include "iot_cli_cmd.h"
 
 #include "caps_switch.h"
 
@@ -123,7 +124,7 @@ static void connection_start(void)
 {
     iot_pin_t *pin_num = NULL;
     int err;
-
+    printf("[%s][%d][Wifi debug]enter connection_start\r\n", __func__, __LINE__);
 #if defined(SET_PIN_NUMBER_CONFRIM)
     pin_num = (iot_pin_t *) malloc(sizeof(iot_pin_t));
     if (!pin_num)
@@ -207,7 +208,7 @@ static void app_main_task(void *arg)
 
     int button_event_type;
     int button_event_count;
-
+    printf("[%s][%d][Task Debug]enter app_main_task\r\n", __func__, __LINE__);
     for (;;) {
         if (get_button_event(&button_event_type, &button_event_count)) {
             button_event(handle, button_event_type, button_event_count);
@@ -220,7 +221,7 @@ static void app_main_task(void *arg)
     }
 }
 
-void app_main(void)
+int main(void)
 {
     /**
       SmartThings Device SDK(STDK) aims to make it easier to develop IoT devices by providing
@@ -248,7 +249,7 @@ void app_main(void)
     unsigned int device_info_len = device_info_end - device_info_start;
 
     int iot_err;
-
+    bk_init();
     // create a iot context
     iot_ctx = st_conn_init(onboarding_config, onboarding_config_len, device_info, device_info_len);
     if (iot_ctx != NULL) {
@@ -263,10 +264,12 @@ void app_main(void)
     capability_init();
 
     iot_gpio_init();
-    register_iot_cli_cmd();
-    uart_cli_main();
+    //register_iot_cli_cmd();
+    //uart_cli_main();
+    //printf("[%s][%d][Wifi debug]before xTaskCreate\r\n", __func__, __LINE__);
     xTaskCreate(app_main_task, "app_main_task", 4096, NULL, 10, NULL);
-
+    //printf("[%s][%d][Wifi debug]after xTaskCreate\r\n", __func__, __LINE__);
     // connect to server
     connection_start();
+    return 0;
 }
