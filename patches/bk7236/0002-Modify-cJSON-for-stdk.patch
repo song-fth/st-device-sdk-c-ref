@@ -1,3 +1,15 @@
+From 7a6792dbc203677fd2ace4fe4ccc2adf830261f6 Mon Sep 17 00:00:00 2001
+From: zihan19-song <zihan19.song@samsung.com>
+Date: Thu, 8 May 2025 15:44:18 +0800
+Subject: [PATCH 2/2] Modify cJSON for stdk
+
+---
+ components/json/cJSON.c | 3563 ++++++++++++++++++++++++++++-----------
+ components/json/cJSON.h |  367 ++--
+ 2 files changed, 2820 insertions(+), 1110 deletions(-)
+ mode change 100755 => 100644 components/json/cJSON.c
+ mode change 100755 => 100644 components/json/cJSON.h
+
 diff --git a/components/json/cJSON.c b/components/json/cJSON.c
 old mode 100755
 new mode 100644
@@ -4352,3 +4364,6 @@ index b76d1041..42c1cc61
 -#endif /*_CJSON_USE_ */
 -#endif /*cJSON__h*/
 +#endif
+-- 
+2.25.1
+
