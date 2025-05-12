@@ -1,7 +1,7 @@
 From 7a6792dbc203677fd2ace4fe4ccc2adf830261f6 Mon Sep 17 00:00:00 2001
 From: zihan19-song <zihan19.song@samsung.com>
 Date: Thu, 8 May 2025 15:44:18 +0800
-Subject: [PATCH 2/2] Modify cJSON for stdk
+Subject: [PATCH 2/3] Modify cJSON for stdk
 
 ---
  components/json/cJSON.c | 3563 ++++++++++++++++++++++++++++-----------
