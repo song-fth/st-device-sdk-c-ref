@@ -6,7 +6,7 @@ PATCH_PATH=${STDK_REF_PATH}/patches/${BSP_NAME}
 CORE_PATH=${STDK_REF_PATH}/iot-core
 LIBSODIUM_PATH=${CORE_PATH}/src/deps/libsodium/libsodium
 
-git submodule status bsp/${BSP_NAME} &> /dev/null
+git submodule status bsp/${1} &> /dev/null
 if [ "$?" == "0" ]; then
     IS_GIT=1
 else
@@ -32,11 +32,11 @@ function apply_patch() {
     popd &> /dev/null
 }
 
-pushd {BSP_PATH} &> /dev/null
-sudo bash tools/env_tools/setup/armino_env_setup.sh
-
-pushd {LIBSODIUM_PATH} &> /dev/null
+pushd ${LIBSODIUM_PATH} &> /dev/null
 git submodule update --init --recursive
 git submodule foreach --recursive git reset --hard
 
 apply_patch ${BSP_PATH} ${PATCH_PATH}
+
+pushd ${BSP_PATH} &> /dev/null
+sudo bash tools/env_tools/setup/armino_env_setup.sh
