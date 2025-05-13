@@ -12,7 +12,6 @@ armino_component_register(SRCS "main.c"
 set(PROJECT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../")
 set(STDK_IOT_CORE_USE_DEFINED_CONFIG "y")
 set(STDK_CORE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../../../iot-core")
-message(STATUS "Using local path: ${STDK_CORE_PATH}")
 add_subdirectory(${STDK_CORE_PATH} iotcore)
 #add_subdirectory($ENV{STDK_CORE_PATH} iotcore)
 target_link_libraries(${COMPONENT_LIB} PUBLIC iotcore)

@@ -180,6 +180,6 @@ config STDK_IOT_CORE_LOG_LEVEL_DEBUG
     help
         Default stdk iot core log level debug.
 
-rsource "/home/songzh/share/stdk/BK/porting/0317/st-device-sdk-c-ref/iot-core/src/Kconfig"
+rsource "${STDK_CORE_PATH}/src/Kconfig"
 
 endmenu
