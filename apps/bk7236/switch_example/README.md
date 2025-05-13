@@ -24,25 +24,23 @@ This example assumes the following component and capabilities are used. :
 ## SmartThings SDK for Direct Connected Devices - Config
 If you want to use specific SmartThings Device SDK build options, you can directly modify the build configuration file. For this example, SmartThings Device SDK config is saved in 'sdkconfig' file. If you want to change this, please execute the following :
 ```sh
-# python build.py {app_path} {option}
 $ cd ~/st-device-sdk-c-ref/
-$ python build.py app/esp32/switch_example menuconfig
+$ vim app/bk7236/switch_example/config/bk7236/config
 ```
 
 ## Test device schematics
-This example uses ESP32 GPIO like below.  
-Please refer below picture for __ESP32-DevKitC__.  
+This example uses BK7236 GPIO like below.  
+Please refer below picture for __BK7236-DevKitC__.  
 > Note: If your device's schematics doesn't match with belows. 
 > Please modify GPIO defines for your device at [device_control.h](main/device_control.h)
 > ```c
-> #define GPIO_INPUT_BUTTON 0
+> #define GPIO_INPUT_BUTTON 28
 > 
-> #define GPIO_OUTPUT_MAINLED 12
-> #define GPIO_OUTPUT_MAINLED_0 26 /* use as ground */
+> #define GPIO_OUTPUT_MAINLED 34
 > ```
 
-### ESP32-DevKitC V4  
-| ESP32 DevKitC                                                     |
+### BK7236-DevKitC  
+| BK7236 DevKitC                                                     |
 |-------------------------------------------------------------------|
-|![ESP32_DEVKITC](../../../doc/res/Switch_Example_ESP32_DEVKITC.png) |
+|![BK7236_DEVKITC](../../../doc/res/Switch_Example_BK7236_DEVKITC.png) |
 
