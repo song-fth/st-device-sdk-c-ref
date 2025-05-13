@@ -42,5 +42,5 @@ Please refer below picture for __BK7236-DevKitC__.
 ### BK7236-DevKitC  
 | BK7236 DevKitC                                                     |
 |-------------------------------------------------------------------|
-|![BK7236_DEVKITC](../../../doc/res/Switch_Example_BK7236_DEVKITC.png) |
+|![BK7236_DEVKITC](../../../doc/res/Switch_Example_BK7236_DEVKITC.PNG) |
 
