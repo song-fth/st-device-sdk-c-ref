@@ -27,9 +27,6 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-//#include "iot_uart_cli.h"
-//#include "iot_cli_cmd.h"
-
 #include "caps_switch.h"
 
 // onboarding_config_start is null-terminated string
@@ -264,11 +261,7 @@ int main(void)
     capability_init();
 
     iot_gpio_init();
-    //register_iot_cli_cmd();
-    //uart_cli_main();
-    //printf("[%s][%d][Wifi debug]before xTaskCreate\r\n", __func__, __LINE__);
     xTaskCreate(app_main_task, "app_main_task", 4096, NULL, 10, NULL);
-    //printf("[%s][%d][Wifi debug]after xTaskCreate\r\n", __func__, __LINE__);
     // connect to server
     connection_start();
     return 0;

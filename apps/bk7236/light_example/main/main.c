@@ -26,9 +26,6 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-//#include "iot_uart_cli.h"
-//#include "iot_cli_cmd.h"
-
 #include "caps_switch.h"
 #include "caps_switchLevel.h"
 #include "caps_colorTemperature.h"
@@ -391,8 +388,6 @@ int main(void)
     capability_init();
 
     iot_gpio_init();
-    //register_iot_cli_cmd();
-    //uart_cli_main();
     xTaskCreate(app_main_task, "app_main_task", 4096, NULL, 10, NULL);
 
     // connect to server
