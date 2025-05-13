@@ -20,7 +20,6 @@
 #define GPIO_OUTPUT_MAINLED_G ( GPIO_32 )
 #define GPIO_OUTPUT_MAINLED_R ( GPIO_34 )
 #define GPIO_OUTPUT_MAINLED_B ( GPIO_36 )
-//#define GPIO_OUTPUT_COLORLED_0 26
 
 enum switch_onoff_state {
     SWITCH_OFF = 0,

@@ -75,12 +75,18 @@ void change_switch_state(int switch_state)
         bk_gpio_set_output_low(GPIO_OUTPUT_MAINLED_G);
         bk_gpio_set_output_low(GPIO_OUTPUT_MAINLED_B);
     } else {
-        //hosal_gpio_output_set(&led_gp_b, (rgb_color_blue > 127) ? COLOR_LED_ON : COLOR_LED_OFF);
-        //hosal_gpio_output_set(&led_gp_g, (rgb_color_green > 127) ? COLOR_LED_ON : COLOR_LED_OFF);
-        //hosal_gpio_output_set(&led_gp_r, (rgb_color_red > 127) ? COLOR_LED_ON : COLOR_LED_OFF);
-        bk_gpio_set_output_high(GPIO_OUTPUT_MAINLED_R);
-        bk_gpio_set_output_high(GPIO_OUTPUT_MAINLED_G);
-        bk_gpio_set_output_high(GPIO_OUTPUT_MAINLED_B);
+        if (rgb_color_red > 127)
+            bk_gpio_set_output_high(GPIO_OUTPUT_MAINLED_R);
+        else
+            bk_gpio_set_output_low(GPIO_OUTPUT_MAINLED_R);
+        if (rgb_color_green > 127)
+            bk_gpio_set_output_high(GPIO_OUTPUT_MAINLED_G);
+        else
+            bk_gpio_set_output_low(GPIO_OUTPUT_MAINLED_G);
+        if (rgb_color_blue > 127)
+            bk_gpio_set_output_high(GPIO_OUTPUT_MAINLED_B);
+        else
+            bk_gpio_set_output_low(GPIO_OUTPUT_MAINLED_B);
     }
 }
 

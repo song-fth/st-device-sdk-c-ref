@@ -32,12 +32,8 @@ void change_switch_state(int switch_state)
 {
     if (switch_state == SWITCH_OFF) {
         bk_gpio_set_output_low(GPIO_OUTPUT_MAINLED_R);
-        bk_gpio_set_output_low(GPIO_OUTPUT_MAINLED_G);
-        bk_gpio_set_output_low(GPIO_OUTPUT_MAINLED_B);
     } else {
         bk_gpio_set_output_high(GPIO_OUTPUT_MAINLED_R);
-        bk_gpio_set_output_high(GPIO_OUTPUT_MAINLED_G);
-        bk_gpio_set_output_high(GPIO_OUTPUT_MAINLED_B);
     }
 }
 
@@ -146,24 +142,15 @@ void iot_gpio_init(void)
     io_conf.io_mode = GPIO_OUTPUT_ENABLE;
     io_conf.pull_mode = GPIO_PULL_UP_EN;
 
-    gpio_dev_unmap(GPIO_OUTPUT_MAINLED_G);
     gpio_dev_unmap(GPIO_OUTPUT_MAINLED_R);
-    gpio_dev_unmap(GPIO_OUTPUT_MAINLED_B);
-
-    bk_gpio_set_config(GPIO_OUTPUT_MAINLED_G, &io_conf);
     bk_gpio_set_config(GPIO_OUTPUT_MAINLED_R, &io_conf);
-    bk_gpio_set_config(GPIO_OUTPUT_MAINLED_B, &io_conf);
-
-    bk_gpio_set_output_low(GPIO_OUTPUT_MAINLED_G);
     bk_gpio_set_output_low(GPIO_OUTPUT_MAINLED_R);
-    bk_gpio_set_output_low(GPIO_OUTPUT_MAINLED_B);
 
 	io_conf.func_mode = GPIO_SECOND_FUNC_DISABLE;
     io_conf.io_mode = GPIO_INPUT_ENABLE;
     io_conf.pull_mode = GPIO_PULL_UP_EN;
 
     gpio_dev_unmap(GPIO_INPUT_BUTTON);
-
     bk_gpio_set_config(GPIO_INPUT_BUTTON, &io_conf);
 }
 
